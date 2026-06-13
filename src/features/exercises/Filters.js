@@ -22,7 +22,7 @@ export function Filters({ filters, onChange }) {
         ${REGIONS.map((r) => html`<option value=${r}>${r}</option>`)}
       </select>
       <select class="input small" value=${filters.group} onChange=${(e) => set({ group: e.target.value })}>
-        <option value="">Alle Trainingsarten</option>
+        <option value="">Alle Arten</option>
         ${GROUPS.map((g) => html`<option value=${g}>${g}</option>`)}
       </select>
     </div>

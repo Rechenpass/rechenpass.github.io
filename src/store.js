@@ -3,14 +3,14 @@
 // Die Zugriffs-Funktionen sind die einzige Stelle, die den Speicher kennt –
 // so lässt sich der Unterbau später bei Bedarf leicht austauschen.
 import { useState, useEffect } from 'preact/hooks';
-import { weekKeyFor } from './dateUtils.js';
+import { weekKeyFor, dayKeyFor } from './dateUtils.js';
 
 const KEY = 'fitnessAppState_v1';
 const listeners = new Set();
 let state = loadState();
 
 function defaultState() {
-  return { exercises: [], plans: [], sessions: [], weeks: {}, rides: [], bodyWeights: [] };
+  return { exercises: [], plans: [], sessions: [], weeks: {}, rides: [], bodyWeights: [], sweets: {} };
 }
 
 function normalize(s) {
@@ -28,6 +28,37 @@ function normalize(s) {
     }
     return e;
   });
+  return linkExistingActivities(merged);
+}
+
+// Migration/Reparatur: bestehende Sessions/Fahrten ohne Verknüpfung nachträglich mit
+// einem geplanten Wocheneintrag desselben Tags + Typs verbinden (best-effort), damit
+// „erledigt" auch für Altdaten stimmt. Idempotent.
+function linkExistingActivities(merged) {
+  const weeks = merged.weeks || {};
+  const sessions = merged.sessions || [];
+  const rides = merged.rides || [];
+  const usedS = new Set();
+  const usedR = new Set();
+  for (const wk of Object.values(weeks)) for (const list of Object.values(wk || {})) for (const e of (list || [])) {
+    if (e.sessionId) usedS.add(e.sessionId);
+    if (e.rideId) usedR.add(e.rideId);
+  }
+  for (const [wkKey, wk] of Object.entries(weeks)) {
+    for (const [dayKey, list] of Object.entries(wk || {})) {
+      for (let i = 0; i < (list || []).length; i++) {
+        const e = list[i];
+        if (e.sessionId || e.rideId) continue;
+        if (e.type === 'strength') {
+          const m = sessions.find((x) => !usedS.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
+          if (m) { list[i] = { ...e, sessionId: m.id }; usedS.add(m.id); }
+        } else if (e.type === 'cycling') {
+          const m = rides.find((x) => !usedR.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
+          if (m) { list[i] = { ...e, rideId: m.id }; usedR.add(m.id); }
+        }
+      }
+    }
+  }
   return merged;
 }
 
@@ -165,18 +196,39 @@ export function deletePlan(id) {
   persist();
 }
 
+// #14: absolvierte Einheit mit einem offenen geplanten Eintrag (gleicher Typ, gleicher
+// Tag) verknüpfen – oder sonst als „spontan absolviert" in den Wochenplan eintragen.
+function linkOrAddWeekEntry(weeks, activity, type, linkKey, extra) {
+  const wk = weekKeyFor(activity.date);
+  const day = dayKeyFor(activity.date);
+  const week = { ...(weeks[wk] || {}) };
+  const list = [...(week[day] || [])];
+  const i = list.findIndex((e) => e.type === type && !e.sessionId && !e.rideId);
+  if (i >= 0) list[i] = { ...list[i], [linkKey]: activity.id };
+  else list.push({ id: uid(), type, spontan: true, [linkKey]: activity.id, ...extra });
+  week[day] = list;
+  return { ...weeks, [wk]: week };
+}
+
 // ---- Trainings-Sessions (absolvierte Workouts, Basis für die Statistik) ----
 export function saveSession(session) {
   const s = { id: uid(), ...session };
-  state = { ...state, sessions: [...state.sessions, s] };
+  const weeks = linkOrAddWeekEntry(state.weeks || {}, s, 'strength', 'sessionId', { planId: s.planId });
+  state = { ...state, sessions: [...state.sessions, s], weeks };
   persist();
   return s;
+}
+
+export function deleteSession(id) {
+  state = { ...state, sessions: (state.sessions || []).filter((s) => s.id !== id) };
+  persist();
 }
 
 // ---- Radtraining (Fahrten) ----
 export function addRide(data) {
   const ride = { id: uid(), createdAt: Date.now(), ...data };
-  state = { ...state, rides: [...(state.rides || []), ride] };
+  const weeks = linkOrAddWeekEntry(state.weeks || {}, ride, 'cycling', 'rideId', { rideType: ride.type });
+  state = { ...state, rides: [...(state.rides || []), ride], weeks };
   persist();
   return ride;
 }
@@ -201,6 +253,21 @@ export function addBodyWeight(data) {
 
 export function deleteBodyWeight(id) {
   state = { ...state, bodyWeights: (state.bodyWeights || []).filter((w) => w.id !== id) };
+  persist();
+}
+
+// ---- Süßigkeiten-Tracking ----
+// Pro Tag genau ein Eintrag, abgelegt unter dem ISO-Datum ('YYYY-MM-DD'):
+// true = Süßigkeiten gegessen · false = keine Süßigkeiten · kein Schlüssel = kein Eintrag.
+export function setSweets(dateKey, hadSweets) {
+  state = { ...state, sweets: { ...(state.sweets || {}), [dateKey]: hadSweets } };
+  persist();
+}
+
+export function clearSweets(dateKey) {
+  const sweets = { ...(state.sweets || {}) };
+  delete sweets[dateKey];
+  state = { ...state, sweets };
   persist();
 }
 

@@ -21,6 +21,7 @@ export function buildSteps(plan) {
       phase: ex.phase, type: ex.type, group: ex.group,
       primaryMuscles: ex.primaryMuscles || [], secondaryMuscles: ex.secondaryMuscles || [], bodyRegions: ex.bodyRegions || [],
       setCount: sets, weighted, weight: it.weight ?? null,
+      halfSignal: !!ex.halfSignal,
       exerciseNo: exIndex + 1, exerciseTotal: total,
     };
     for (let s = 1; s <= sets; s++) {

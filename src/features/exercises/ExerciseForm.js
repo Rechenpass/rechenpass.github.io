@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { Segmented } from '../../components/Segmented.js';
 import { MuscleSelect } from './MuscleSelect.js';
+import { AutoTextarea } from '../../components/AutoTextarea.js';
 import { GROUPS, PHASES, REGIONS, SETS_OPTIONS, REPS_OPTIONS, DURATION_OPTIONS } from '../../constants.js';
 import { addExercise, updateExercise, deleteExercise } from '../../store.js';
 
@@ -37,6 +38,7 @@ export function ExerciseForm({ initial, onClose, onSaved }) {
       defaultSets: d.type === 'reps' ? Number(d.defaultSets) : undefined,
       defaultReps: d.type === 'reps' ? Number(d.defaultReps) : undefined,
       defaultDurationSec: d.type === 'time' ? Number(d.defaultDurationSec) : undefined,
+      halfSignal: d.type === 'time' ? !!d.halfSignal : undefined,
     };
     if (initial && initial.id) updateExercise(initial.id, data);
     else addExercise(data);
@@ -69,8 +71,8 @@ export function ExerciseForm({ initial, onClose, onSaved }) {
 
       <label class="field">
         <span class="field-label">Beschreibung / Ausführung</span>
-        <textarea class="input" rows="4" placeholder="Wie wird die Übung korrekt ausgeführt?"
-          value=${d.description} onInput=${(e) => set({ description: e.target.value })}></textarea>
+        <${AutoTextarea} rows=${4} placeholder="Wie wird die Übung korrekt ausgeführt?"
+          value=${d.description} onInput=${(e) => set({ description: e.target.value })} />
       </label>
 
       <div class="field">
@@ -138,6 +140,11 @@ export function ExerciseForm({ initial, onClose, onSaved }) {
             <select class="input" value=${d.defaultDurationSec} onChange=${(e) => set({ defaultDurationSec: Number(e.target.value) })}>
               ${DURATION_OPTIONS.map((n) => html`<option value=${n}>${n} Sekunden</option>`)}
             </select>
+          </label>
+          <label class="field checkbox-field">
+            <input type="checkbox" checked=${!!d.halfSignal}
+              onChange=${(e) => set({ halfSignal: e.target.checked })} />
+            <span>Signal nach der Hälfte <span class="muted">– Seite / Richtung wechseln</span></span>
           </label>
           <p class="hint">Standardwert – im Trainingsplan später anpassbar.</p>`}
 

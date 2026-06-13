@@ -12,7 +12,7 @@
  * sauber ersetzt werden.
  */
 
-const CACHE = 'meintraining-v1';
+const CACHE = 'meintraining-v2';
 
 const ASSETS = [
   './',
@@ -26,6 +26,9 @@ const ASSETS = [
   './src/components/BottomNav.js',
   './src/components/Icon.js',
   './src/components/Segmented.js',
+  './src/components/AutoTextarea.js',
+  './src/components/SwipeRow.js',
+  './src/components/useEntryDeletion.js',
   './src/constants.js',
   './src/dateUtils.js',
   './src/features/cycling/CyclingPanel.js',
@@ -47,6 +50,7 @@ const ASSETS = [
   './src/features/stats/Charts.js',
   './src/features/stats/CyclingStats.js',
   './src/features/stats/StatsPage.js',
+  './src/features/stats/SweetsStats.js',
   './src/features/stats/statsUtils.js',
   './src/features/workout/WorkoutPage.js',
   './src/features/workout/WorkoutPlayer.js',

@@ -4,16 +4,17 @@ import { Icon } from '../../components/Icon.js';
 import { phaseLabel } from '../../constants.js';
 import { saveSession } from '../../store.js';
 import { buildSteps, totalSets, formatClock } from './workoutEngine.js';
-import { RepsWorkStep, TimeWorkStep, RestStep } from './WorkoutSteps.js';
+import { RepsWorkStep, TimeWorkStep, RestStep, PrepCountdown } from './WorkoutSteps.js';
 import { WorkoutSummary } from './WorkoutSummary.js';
 import { WorkoutReview } from './WorkoutReview.js';
+import { beep } from './workoutRuntime.js';
 
 function phaseClass(phase) {
   return phase === 'WarmUp' ? 'warmup' : phase === 'CoolDown' ? 'cooldown' : 'training';
 }
 
 export function WorkoutPlayer({ plan, onExit }) {
-  const steps = useMemo(() => buildSteps(plan), [plan]);
+  const [steps, setSteps] = useState(() => buildSteps(plan));
   const [i, setI] = useState(0);
   const [entries, setEntries] = useState([]);
   const [finished, setFinished] = useState(null);
@@ -22,11 +23,34 @@ export function WorkoutPlayer({ plan, onExit }) {
   const [reviewEntries, setReviewEntries] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [descOpen, setDescOpen] = useState(false); // Beschreibung wird nur auf Tipp als Sheet gezeigt
+  const [prep, setPrep] = useState(true); // #29: 10-Sek-Countdown vor dem Start
   // Gesamtzeit läuft sekündlich mit (Wanduhr ab Start – passt zur gespeicherten durationSec).
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // #34: Bildschirm während des Trainings wach halten (Wake Lock; bei iOS ab 16.4).
+  useEffect(() => {
+    let lock = null;
+    let released = false;
+    const acquire = async () => {
+      try { if (navigator.wakeLock) lock = await navigator.wakeLock.request('screen'); } catch (e) { /* egal */ }
+    };
+    const onVis = () => { if (document.visibilityState === 'visible' && !released) acquire(); };
+    acquire();
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVis);
+      try { lock && lock.release(); } catch (e) { /* egal */ }
+    };
+  }, []);
+
+  // #31: höherer Signalton zu Beginn jeder Übung/Pause (nicht während des Vor-Countdowns).
+  useEffect(() => {
+    if (!prep) beep(1046, 110);
+  }, [i, prep]);
 
   const confirmSave = (editedEntries) => {
     const session = {
@@ -59,10 +83,18 @@ export function WorkoutPlayer({ plan, onExit }) {
     return html`<${WorkoutReview} entries=${reviewEntries} onConfirm=${confirmSave} onCancel=${cancelReview} />`;
   }
 
+  if (prep) {
+    return html`<${PrepCountdown} planName=${plan.name}
+      onDone=${() => setPrep(false)} onSkip=${() => setPrep(false)}
+      onQuit=${() => { if (confirm('Workout abbrechen? Der Fortschritt wird nicht gespeichert.')) onExit(); }} />`;
+  }
+
   const step = steps[i];
-  const setsTotal = totalSets(steps);
-  const setsDone = entries.length;
-  const progress = setsTotal ? Math.round((setsDone / setsTotal) * 100) : 0;
+  // #33: Fortschritt je Phase (Warm-Up/Training/Cool-Down) für den unterteilten Balken.
+  const workSteps = steps.filter((s) => s.kind === 'work');
+  const phaseSegs = ['WarmUp', 'Training', 'CoolDown']
+    .map((ph) => ({ phase: ph, total: workSteps.filter((s) => s.phase === ph).length, done: entries.filter((e) => e.phase === ph).length }))
+    .filter((p) => p.total > 0);
   const elapsed = Math.floor((now - startRef.current) / 1000);
 
   const handleNext = (partial) => {
@@ -88,6 +120,14 @@ export function WorkoutPlayer({ plan, onExit }) {
     }
   };
 
+  // #36: spontan einen weiteren Satz der aktuellen Übung direkt dahinter einschieben.
+  const addSet = () => {
+    const cur = steps[i];
+    if (!cur || cur.kind !== 'work') return;
+    const newStep = { ...cur, setIndex: (cur.setCount || 1) + 1, extra: true };
+    setSteps((prev) => { const ns = [...prev]; ns.splice(i + 1, 0, newStep); return ns; });
+  };
+
   const quit = () => {
     if (confirm('Workout abbrechen? Der Fortschritt wird nicht gespeichert.')) onExit();
   };
@@ -98,10 +138,13 @@ export function WorkoutPlayer({ plan, onExit }) {
       <h2>${plan.name}</h2>
       <div class="work-meta">
         <span class="work-time"><${Icon} name="clock" size=${14} /> ${formatClock(elapsed)}</span>
-        <span class="work-count">${setsDone}/${setsTotal} Sätze</span>
       </div>
     </header>
-    <div class="progress-bar"><div class="progress-fill" style=${`width:${progress}%`}></div></div>
+    <div class="progress-bar">
+      ${phaseSegs.map((p) => html`<div class=${'pb-seg ' + phaseClass(p.phase)} style=${`flex:${p.total}`} key=${p.phase}>
+        <div class="pb-seg-fill" style=${`width:${Math.round((p.done / p.total) * 100)}%`}></div>
+      </div>`)}
+    </div>
 
     <div class="screen-body workout-body">
       <div class="work-head">
@@ -119,8 +162,8 @@ export function WorkoutPlayer({ plan, onExit }) {
             : null}
         </div>
         ${step.type === 'time'
-          ? html`<${TimeWorkStep} key=${i} step=${step} onNext=${handleNext} />`
-          : html`<${RepsWorkStep} key=${i} step=${step} onNext=${handleNext} />`}
+          ? html`<${TimeWorkStep} key=${i} step=${step} onNext=${handleNext} onSkip=${() => handleNext(null)} onAddSet=${addSet} />`
+          : html`<${RepsWorkStep} key=${i} step=${step} onNext=${handleNext} onSkip=${() => handleNext(null)} onAddSet=${addSet} />`}
       ` : html`
         <${RestStep} key=${i} step=${step} onNext=${handleNext} />
       `}

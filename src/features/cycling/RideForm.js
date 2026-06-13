@@ -2,6 +2,7 @@ import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { Segmented } from '../../components/Segmented.js';
+import { AutoTextarea } from '../../components/AutoTextarea.js';
 import { addRide, updateRide, deleteRide } from '../../store.js';
 import { isoDate, todayInput, parseDateInput } from '../../dateUtils.js';
 
@@ -86,7 +87,7 @@ export function RideForm({ initial, onClose }) {
 
       <label class="field">
         <span class="field-label">Notiz <span class="muted">(optional)</span></span>
-        <textarea class="input" rows="2" value=${d.note} onInput=${(e) => set({ note: e.target.value })}></textarea>
+        <${AutoTextarea} rows=${2} value=${d.note} onInput=${(e) => set({ note: e.target.value })} />
       </label>
 
       ${!isIndoor ? html`<p class="hint">Für Outdoor-Fahrten sind km und Höhenmeter typisch – Pflicht ist aber nichts.</p>` : null}

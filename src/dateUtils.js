@@ -35,6 +35,12 @@ export function weekKeyFor(ts) {
   return isoDate(startOfWeek(ts).getTime());
 }
 
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+// Wochentags-Schlüssel ('mon'..'sun', Montag = 0) für einen Zeitstempel.
+export function dayKeyFor(ts) {
+  return DAY_KEYS[(new Date(ts).getDay() + 6) % 7];
+}
+
 export function shiftWeekKey(weekKey, n) {
   const d = new Date(parseDateInput(weekKey));
   d.setDate(d.getDate() + n * 7);
@@ -53,14 +59,14 @@ export function isoWeekNumber(ts) {
 
 const MONTHS_SHORT = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
 
-// "1.–7. Juni 2026" bzw. "29. Juni – 5. Juli 2026"
+// "1. bis 7. Juni 2026" bzw. "29. Juni bis 5. Juli 2026"
 export function weekRangeLabel(weekKey) {
   const mon = new Date(parseDateInput(weekKey));
   const sun = new Date(mon);
   sun.setDate(mon.getDate() + 6);
   if (mon.getMonth() === sun.getMonth()) {
-    return `${mon.getDate()}.–${sun.getDate()}. ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}`;
+    return `${mon.getDate()}. bis ${sun.getDate()}. ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}`;
   }
   const y = mon.getFullYear() === sun.getFullYear() ? '' : ` ${mon.getFullYear()}`;
-  return `${mon.getDate()}. ${MONTHS_SHORT[mon.getMonth()]}${y} – ${sun.getDate()}. ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}`;
+  return `${mon.getDate()}. ${MONTHS_SHORT[mon.getMonth()]}${y} bis ${sun.getDate()}. ${MONTHS_SHORT[sun.getMonth()]} ${sun.getFullYear()}`;
 }

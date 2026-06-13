@@ -1,3 +1,5 @@
+import { isoWeekNumber } from '../../dateUtils.js';
+
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 const p2 = (n) => String(n).padStart(2, '0');
 
@@ -21,8 +23,7 @@ export function periodLabel(ts, period) {
   const d = new Date(ts);
   if (period === 'year') return String(d.getFullYear());
   if (period === 'month') return MONTHS[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
-  const s = startOfWeek(d);
-  return p2(s.getDate()) + '.' + p2(s.getMonth() + 1);
+  return 'KW ' + isoWeekNumber(ts);
 }
 
 // Letzte n Zeiträume (inkl. aktuellem) als {key,label}, damit Lücken als 0 sichtbar werden.

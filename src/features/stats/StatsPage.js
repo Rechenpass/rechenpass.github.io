@@ -8,10 +8,41 @@ import {
 } from './statsUtils.js';
 import { CyclingStats } from './CyclingStats.js';
 import { BodyWeightStats } from './BodyWeightStats.js';
+import { SweetsStats } from './SweetsStats.js';
 
 const PERIODS = [{ value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
 const NOUN = { week: 'Woche', month: 'Monat', year: 'Jahr' };
 const SPAN = { week: 8, month: 6, year: 4 };
+
+// #37: Übersicht – Kraft und Rad getrennt gezählt, Einheiten pro Zeitraum, gemeinsamer Umschalter.
+function OverviewStats({ sessions, rides }) {
+  const [period, setPeriod] = useState('week');
+  const periods = lastPeriods(period, SPAN[period]);
+  const bars = (items) => {
+    const m = {};
+    items.forEach((it) => { const k = periodKey(it.date, period); m[k] = (m[k] || 0) + 1; });
+    return periods.map((p) => ({ label: p.label, value: m[p.key] || 0 }));
+  };
+
+  if (sessions.length + rides.length === 0) {
+    return html`<div class="empty">
+      <div class="empty-emoji">📊</div>
+      <p>Noch keine Einheiten. Absolviere ein Training oder erfasse eine Fahrt.</p>
+    </div>`;
+  }
+
+  return html`<div class="stats-views">
+    <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
+    <div class="stats-section">
+      <h3><span class="ov-dot" style="background:var(--accent)"></span>Kraft pro ${NOUN[period]}</h3>
+      <${BarChart} data=${bars(sessions)} />
+    </div>
+    <div class="stats-section">
+      <h3><span class="ov-dot" style="background:var(--success)"></span>Rad pro ${NOUN[period]}</h3>
+      <${BarChart} data=${bars(rides)} color="var(--success)" />
+    </div>
+  </div>`;
+}
 
 function KraftStats({ sessions }) {
   const [period, setPeriod] = useState('week');
@@ -24,7 +55,6 @@ function KraftStats({ sessions }) {
     </div>`;
   }
 
-  const totalSets = sessions.reduce((a, s) => a + s.entries.length, 0);
   const exList = exercisesFromSessions(sessions);
   const selEx = exId && exList.some((x) => x.id === exId) ? exId : exList[0].id;
   const meta = exMeta(sessions, selEx);
@@ -38,11 +68,6 @@ function KraftStats({ sessions }) {
   const muscleRows = muscleFrequency(sessions).slice(0, 10);
 
   return html`<div class="stats-views">
-    <div class="summary-stats">
-      <div class="stat"><div class="stat-num">${sessions.length}</div><div class="stat-label">Trainings</div></div>
-      <div class="stat"><div class="stat-num">${totalSets}</div><div class="stat-label">Sätze</div></div>
-      <div class="stat"><div class="stat-num">${exList.length}</div><div class="stat-label">Übungen</div></div>
-    </div>
     <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
     <div class="stats-section"><h3>Trainings pro ${NOUN[period]}</h3><${BarChart} data=${trainBars} /></div>
     <div class="stats-section">
@@ -63,18 +88,20 @@ function KraftStats({ sessions }) {
 
 export function StatsPage() {
   const state = useStore();
-  const [view, setView] = useState('kraft');
+  const [view, setView] = useState('overview');
   return html`<div class="screen">
     <header class="screen-header"><h2>Statistik</h2></header>
     <div class="screen-body">
       <${Segmented}
-        options=${[{ value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'body', label: 'Körper' }]}
+        options=${[{ value: 'overview', label: 'Übersicht' }, { value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'body', label: 'Körper' }]}
         value=${view} onChange=${setView} />
-      ${view === 'kraft'
+      ${view === 'overview'
+        ? html`<${OverviewStats} sessions=${state.sessions || []} rides=${state.rides || []} />`
+        : view === 'kraft'
         ? html`<${KraftStats} sessions=${state.sessions || []} />`
         : view === 'rad'
         ? html`<${CyclingStats} rides=${state.rides || []} bodyWeights=${state.bodyWeights || []} />`
-        : html`<${BodyWeightStats} bodyWeights=${state.bodyWeights || []} />`}
+        : html`<${BodyWeightStats} bodyWeights=${state.bodyWeights || []} /><${SweetsStats} sweets=${state.sweets || {}} />`}
     </div>
   </div>`;
 }

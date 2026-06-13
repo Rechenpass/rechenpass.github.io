@@ -1,7 +1,7 @@
 import { html } from '../../html.js';
 
 // Senkrechtes Balkendiagramm (SVG, skaliert per viewBox auf volle Breite).
-export function BarChart({ data }) {
+export function BarChart({ data, color = 'var(--accent)' }) {
   const W = 320, H = 160, padT = 18, padB = 26, padX = 8;
   const max = Math.max(1, ...data.map((d) => d.value));
   const n = data.length || 1;
@@ -13,7 +13,7 @@ export function BarChart({ data }) {
       const x = padX + slot * i + (slot - bw) / 2;
       const y = H - padB - h;
       return html`<g>
-        <rect x=${x} y=${y} width=${bw} height=${Math.max(0, h)} rx="4" fill="var(--accent)" />
+        <rect x=${x} y=${y} width=${bw} height=${Math.max(0, h)} rx="4" fill=${color} />
         ${d.value > 0 ? html`<text x=${x + bw / 2} y=${y - 4} text-anchor="middle" class="chart-val">${d.value}</text>` : null}
         <text x=${x + bw / 2} y=${H - 8} text-anchor="middle" class="chart-lbl">${d.label}</text>
       </g>`;

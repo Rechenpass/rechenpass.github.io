@@ -5,6 +5,8 @@ import { Icon } from '../../components/Icon.js';
 import { WEEKDAYS } from '../../constants.js';
 import { weekKeyFor, startOfWeek, weekRangeLabel } from '../../dateUtils.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
+import { SwipeRow } from '../../components/SwipeRow.js';
+import { useEntryDeletion } from '../../components/useEntryDeletion.js';
 
 const DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -19,12 +21,6 @@ function todayLabel() {
   const d = new Date();
   return `${DAYS[d.getDay()]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
 }
-function isSameDay(ts) {
-  const d = new Date(ts);
-  const n = new Date();
-  return d.getDate() === n.getDate() && d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
-}
-
 // Ein Fortschritts-Strang (Kraft ODER Rad): erledigt (grün) · überfällig (rot) · offen (grau).
 function ProgressStrand({ icon, label, done, overdue, planned }) {
   const segs = [];
@@ -38,7 +34,7 @@ function ProgressStrand({ icon, label, done, overdue, planned }) {
   let statusCls = 'open';
   let statusIcon = 'clock';
   let text;
-  if (behind > 0) { statusCls = 'behind'; statusIcon = 'alert'; text = `${behind} im Rückstand`; }
+  if (behind > 0) { statusCls = 'behind'; statusIcon = 'alert'; text = 'Rückstand'; }
   else if (open <= 0) { statusCls = 'ok'; statusIcon = 'check'; text = 'Erledigt'; }
   else { text = `${open} offen`; }
 
@@ -56,18 +52,13 @@ function ProgressStrand({ icon, label, done, overdue, planned }) {
 export function HomePage({ onStartWorkout, onLogRide, onGoTraining }) {
   const state = useStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { requestDelete, deleteModal } = useEntryDeletion();
   if (settingsOpen) return html`<${SettingsPage} onClose=${() => setSettingsOpen(false)} />`;
   const week = (state.weeks || {})[weekKeyFor(Date.now())] || {};
   const todays = week[todayKey()] || [];
 
-  // „Heute erledigt?" – zählbasiert: ein heutiges Training/eine heutige Fahrt markiert je einen geplanten Eintrag.
-  let sessToday = (state.sessions || []).filter((s) => isSameDay(s.date)).length;
-  let rideToday = (state.rides || []).filter((r) => isSameDay(r.date)).length;
-  const todaysWithDone = todays.map((e) => {
-    if (e.type === 'strength' && sessToday > 0) { sessToday -= 1; return { e, done: true }; }
-    if (e.type === 'cycling' && rideToday > 0) { rideToday -= 1; return { e, done: true }; }
-    return { e, done: false };
-  });
+  // „Heute erledigt?" – über die Verknüpfung (Session/Fahrt) am Eintrag.
+  const todaysWithDone = todays.map((e) => ({ e, done: !!(e.sessionId || e.rideId) }));
 
   // Fortschritt Woche – getrennt nach Kraft und Rad
   const tIdx = todayIndex();
@@ -101,33 +92,41 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining }) {
         ${todays.length === 0
           ? html`<p class="stats-caption">Kein Training geplant – Ruhetag. Du kannst unten jederzeit selbst starten.</p>`
           : todaysWithDone.map(({ e, done }) => {
+            const onDel = () => requestDelete(weekKeyFor(Date.now()), todayKey(), e, done ? 'done' : 'open');
             if (e.type === 'strength') {
               const p = getPlan(e.planId);
-              return html`<div class="today-row" key=${e.id}>
+              return html`<${SwipeRow} key=${e.id} onDelete=${onDel}>
+                <div class="today-row">
+                  <div class="pi-main">
+                    <div class="card-title">${p ? p.name : 'Plan gelöscht'}</div>
+                    <div class="plan-meta">Krafttraining</div>
+                  </div>
+                  ${done
+                    ? doneBadge
+                    : (p ? html`<button class="iconbtn start" onClick=${() => onStartWorkout(p)} aria-label="Training starten"><${Icon} name="play" size=${22} /></button>` : null)}
+                </div>
+              </${SwipeRow}>`;
+            }
+            return html`<${SwipeRow} key=${e.id} onDelete=${onDel}>
+              <div class="today-row">
                 <div class="pi-main">
-                  <div class="card-title">${p ? p.name : 'Plan gelöscht'}</div>
-                  <div class="plan-meta">Krafttraining</div>
+                  <div class="card-title">${e.rideType === 'indoor' ? 'Indoor-Training' : 'Radausfahrt'}</div>
+                  <div class="plan-meta">Radtraining</div>
                 </div>
                 ${done
                   ? doneBadge
-                  : (p ? html`<button class="btn primary" onClick=${() => onStartWorkout(p)}><${Icon} name="play" size=${16} /> Training starten</button>` : null)}
-              </div>`;
-            }
-            return html`<div class="today-row" key=${e.id}>
-              <div class="pi-main">
-                <div class="card-title">${e.rideType === 'indoor' ? 'Indoor-Training' : 'Radausfahrt'}</div>
-                <div class="plan-meta">Radtraining</div>
+                  : html`<button class="btn primary" onClick=${onLogRide}><${Icon} name="bike" size=${16} /> Erfassen</button>`}
               </div>
-              ${done
-                ? doneBadge
-                : html`<button class="btn primary" onClick=${onLogRide}><${Icon} name="bike" size=${16} /> Erfassen</button>`}
-            </div>`;
+            </${SwipeRow}>`;
           })}
       </div>
 
-      <div class="home-actions">
-        <button class="btn full" onClick=${onGoTraining}><${Icon} name="list" size=${18} /> Training auswählen</button>
-        <button class="btn full" onClick=${onLogRide}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
+      <div class="stats-section">
+        <h3>Doch was anderes?</h3>
+        <div class="home-actions">
+          <button class="btn full" onClick=${onGoTraining}><${Icon} name="list" size=${18} /> Training auswählen</button>
+          <button class="btn full" onClick=${onLogRide}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
+        </div>
       </div>
 
       <div class="stats-section">
@@ -151,5 +150,6 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining }) {
             </div>`}
       </div>
     </div>
+    ${deleteModal}
   </div>`;
 }
