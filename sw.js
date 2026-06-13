@@ -12,7 +12,7 @@
  * sauber ersetzt werden.
  */
 
-const CACHE = 'meintraining-v2';
+const CACHE = 'meintraining-v3';
 
 const ASSETS = [
   './',
@@ -78,9 +78,16 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(async (keys) => {
+      const oldKeys = keys.filter((k) => k !== CACHE);
+      const isUpdate = oldKeys.length > 0;
+      await Promise.all(oldKeys.map((k) => caches.delete(k)));
+      await self.clients.claim();
+      if (isUpdate) {
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach((c) => c.postMessage({ type: 'UPDATE_AVAILABLE' }));
+      }
+    })
   );
 });
 

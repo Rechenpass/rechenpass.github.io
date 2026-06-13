@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { html } from './html.js';
 import { BottomNav } from './components/BottomNav.js';
 import { HomePage } from './features/home/HomePage.js';
@@ -16,6 +16,14 @@ function App() {
   const [activePlan, setActivePlan] = useState(null);   // laufendes Workout
   const [rideForm, setRideForm] = useState(null);       // null | 'new' | ride
   const [trainingMode, setTrainingMode] = useState('kraft'); // Kraft/Rad-Umschalter im Training-Tab
+  const [updateReady, setUpdateReady] = useState(false);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (e) => { if (e.data?.type === 'UPDATE_AVAILABLE') setUpdateReady(true); };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, []);
 
   const startWorkout = (plan) => { unlockAudio(); setActivePlan(plan); };
   const openRide = (ride) => setRideForm(ride || 'new');
@@ -46,6 +54,9 @@ function App() {
     <div class="app">
       <main class="app-main">${page}</main>
       <${BottomNav} active=${tab} onChange=${setTab} />
+      ${updateReady && html`<div class="update-banner" onClick=${() => location.reload()}>
+        App-Update bereit – tippen zum Neu starten
+      </div>`}
     </div>`;
 }
 
