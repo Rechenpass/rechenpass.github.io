@@ -25,6 +25,8 @@ function App() {
     return () => navigator.serviceWorker.removeEventListener('message', handler);
   }, []);
 
+  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+
   const startWorkout = (plan) => { unlockAudio(); setActivePlan(plan); };
   const openRide = (ride) => setRideForm(ride || 'new');
   const logRideFromHome = () => { setTrainingMode('rad'); setRideForm('new'); };
