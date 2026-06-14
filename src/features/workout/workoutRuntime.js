@@ -57,6 +57,7 @@ export function unlockAudio() {
 export function beep(freq = 880, ms = 160) {
   try {
     if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume(); // iOS: Context kann zwischendurch einschlafen
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'sine';

@@ -4,9 +4,6 @@ import { Icon } from '../../components/Icon.js';
 import { setSweets, clearSweets } from '../../store.js';
 import { todayInput } from '../../dateUtils.js';
 
-// HINWEIS: Diese Ansicht ist fertig, aber bewusst NOCH NICHT in der App eingehängt
-// (siehe StatsPage.js). Zum Aktivieren dort den Import einkommentieren und rendern.
-
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
   'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 const DOW = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];

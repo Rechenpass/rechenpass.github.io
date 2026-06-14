@@ -15,6 +15,7 @@ export function periodKey(ts, period) {
   const d = new Date(ts);
   if (period === 'year') return String(d.getFullYear());
   if (period === 'month') return d.getFullYear() + '-' + p2(d.getMonth() + 1);
+  if (period === 'day') return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
   const s = startOfWeek(d);
   return s.getFullYear() + '-' + p2(s.getMonth() + 1) + '-' + p2(s.getDate());
 }
@@ -23,6 +24,7 @@ export function periodLabel(ts, period) {
   const d = new Date(ts);
   if (period === 'year') return String(d.getFullYear());
   if (period === 'month') return MONTHS[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
+  if (period === 'day') return d.getDate() + '.' + (d.getMonth() + 1) + '.';
   return 'KW ' + isoWeekNumber(ts);
 }
 
@@ -34,6 +36,7 @@ export function lastPeriods(period, n) {
     let d;
     if (period === 'year') d = new Date(now.getFullYear() - i, 0, 1);
     else if (period === 'month') d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    else if (period === 'day') { d = new Date(now); d.setDate(now.getDate() - i); }
     else { const s = startOfWeek(now); d = new Date(s); d.setDate(s.getDate() - i * 7); }
     out.push({ key: periodKey(d.getTime(), period), label: periodLabel(d.getTime(), period) });
   }

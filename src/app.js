@@ -2,6 +2,7 @@ import { render } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { html } from './html.js';
 import { BottomNav } from './components/BottomNav.js';
+import { Icon } from './components/Icon.js';
 import { HomePage } from './features/home/HomePage.js';
 import { WorkoutPage } from './features/workout/WorkoutPage.js';
 import { WeekPage } from './pages/WeekPage.js';
@@ -9,41 +10,68 @@ import { StatsPage } from './features/stats/StatsPage.js';
 import { ManagePage } from './features/manage/ManagePage.js';
 import { WorkoutPlayer } from './features/workout/WorkoutPlayer.js';
 import { RideForm } from './features/cycling/RideForm.js';
+import { WorkoutReview } from './features/workout/WorkoutReview.js';
+import { updateSession } from './store.js';
 import { unlockAudio } from './features/workout/workoutRuntime.js';
+
+const APP_VERSION = 'v6';
 
 function App() {
   const [tab, setTab] = useState('heute');
   const [activePlan, setActivePlan] = useState(null);   // laufendes Workout
   const [rideForm, setRideForm] = useState(null);       // null | 'new' | ride
-  const [trainingMode, setTrainingMode] = useState('kraft'); // Kraft/Rad-Umschalter im Training-Tab
+  const [editSession, setEditSession] = useState(null); // erledigtes Krafttraining nachträglich prüfen/korrigieren
+  const [pendingDate, setPendingDate] = useState(null); // Datum für rückwirkendes Erfassen (vergangene Tage)
   const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
+    // Versions-Check: neuer Code läuft zum ersten Mal → Banner zeigen
+    // Das ist die zuverlässigste Methode auf iOS, weil keine SW-Events benötigt werden.
+    const prev = localStorage.getItem('_mv');
+    if (prev && prev !== APP_VERSION) setUpdateReady(true);
+    localStorage.setItem('_mv', APP_VERSION);
+
+    // Fallback: SW-Ereignisse
     if (!('serviceWorker' in navigator)) return;
-    const handler = (e) => { if (e.data?.type === 'UPDATE_AVAILABLE') setUpdateReady(true); };
-    navigator.serviceWorker.addEventListener('message', handler);
-    return () => navigator.serviceWorker.removeEventListener('message', handler);
+    // Auf iOS prüft Safari den SW manchmal erst nach 24h – update() erzwingt sofortige Prüfung
+    navigator.serviceWorker.ready.then((reg) => reg.update()).catch(() => {});
+    let hadController = !!navigator.serviceWorker.controller;
+    const onControllerChange = () => { if (hadController) setUpdateReady(true); hadController = true; };
+    const onMessage = (e) => { if (e.data?.type === 'UPDATE_AVAILABLE') setUpdateReady(true); };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      navigator.serviceWorker.removeEventListener('message', onMessage);
+    };
   }, []);
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  const startWorkout = (plan) => { unlockAudio(); setActivePlan(plan); };
-  const openRide = (ride) => setRideForm(ride || 'new');
-  const logRideFromHome = () => { setTrainingMode('rad'); setRideForm('new'); };
+  const startWorkout = (plan, date) => { unlockAudio(); setPendingDate(date ?? null); setActivePlan(plan); };
+  const logRideFromHome = (date) => { setPendingDate(date ?? null); setRideForm('new'); };
 
   // Vollbild-Abläufe liegen „über" den Tabs (ohne untere Leiste – Fokus, eigener Zurück/Abbrechen-Button)
   if (activePlan) {
-    return html`<div class="app"><${WorkoutPlayer} plan=${activePlan} onExit=${() => setActivePlan(null)} /></div>`;
+    return html`<div class="app"><${WorkoutPlayer} plan=${activePlan} date=${pendingDate}
+      onExit=${() => { setActivePlan(null); setPendingDate(null); }} /></div>`;
   }
   if (rideForm) {
-    return html`<div class="app"><${RideForm} initial=${rideForm === 'new' ? null : rideForm} onClose=${() => setRideForm(null)} /></div>`;
+    return html`<div class="app"><${RideForm} initial=${rideForm === 'new' ? null : rideForm} initialDate=${rideForm === 'new' ? pendingDate : null}
+      onClose=${() => { setRideForm(null); setPendingDate(null); }} /></div>`;
+  }
+  if (editSession) {
+    return html`<div class="app"><${WorkoutReview} editMode entries=${editSession.entries}
+      onConfirm=${(rows) => { updateSession(editSession.id, { entries: rows }); setEditSession(null); }}
+      onCancel=${() => setEditSession(null)} /></div>`;
   }
 
   let page;
   if (tab === 'heute') {
-    page = html`<${HomePage} onStartWorkout=${startWorkout} onLogRide=${logRideFromHome} onGoTraining=${() => setTab('training')} />`;
+    page = html`<${HomePage} onStartWorkout=${startWorkout} onLogRide=${logRideFromHome} onGoTraining=${() => setTab('training')}
+      onEditRide=${(ride) => setRideForm(ride)} onEditSession=${setEditSession} />`;
   } else if (tab === 'training') {
-    page = html`<${WorkoutPage} mode=${trainingMode} onMode=${setTrainingMode} onStartWorkout=${startWorkout} onEditRide=${openRide} />`;
+    page = html`<${WorkoutPage} onStartWorkout=${startWorkout} />`;
   } else if (tab === 'week') {
     page = html`<${WeekPage} />`;
   } else if (tab === 'stats') {
@@ -56,9 +84,10 @@ function App() {
     <div class="app">
       <main class="app-main">${page}</main>
       <${BottomNav} active=${tab} onChange=${setTab} />
-      ${updateReady && html`<div class="update-banner" onClick=${() => location.reload()}>
-        App-Update bereit – tippen zum Neu starten
-      </div>`}
+      ${updateReady && html`<button class="update-banner" onClick=${() => location.reload()}>
+        <${Icon} name="reset" size=${20} />
+        <span class="ub-text">App-Update bereit<small>Tippen zum Neustart</small></span>
+      </button>`}
     </div>`;
 }
 

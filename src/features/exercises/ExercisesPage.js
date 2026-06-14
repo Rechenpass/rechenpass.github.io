@@ -1,5 +1,5 @@
 import { html } from '../../html.js';
-import { useState, useMemo } from 'preact/hooks';
+import { useState, useMemo, useRef, useEffect } from 'preact/hooks';
 import { useStore, seedExamples } from '../../store.js';
 import { Icon } from '../../components/Icon.js';
 import { Segmented } from '../../components/Segmented.js';
@@ -16,6 +16,11 @@ export function ExercisesPage({ sub, onSub }) {
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1600); };
+
+  // Scroll-Position der Liste merken und nach dem Schließen des Formulars wiederherstellen.
+  const scrollRef = useRef(0);
+  const openEditor = (target) => { scrollRef.current = window.scrollY; setEditing(target); };
+  useEffect(() => { if (!editing) window.scrollTo(0, scrollRef.current); }, [editing]);
 
   const visible = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -45,7 +50,7 @@ export function ExercisesPage({ sub, onSub }) {
       <${Segmented}
         options=${[{ value: 'exercises', label: 'Übungen' }, { value: 'plans', label: 'Pläne' }]}
         value=${sub} onChange=${onSub} />
-      <button class="iconbtn primary" onClick=${() => setEditing('new')} aria-label="Neue Übung">
+      <button class="iconbtn primary" onClick=${() => openEditor('new')} aria-label="Neue Übung">
         <${Icon} name="plus" />
       </button>
     </header>
@@ -63,7 +68,7 @@ export function ExercisesPage({ sub, onSub }) {
             <div class="empty-emoji">🏋️</div>
             <p>Noch keine Übungen im Pool. Lege deine erste Übung an oder lade ein paar Beispiele zum Ausprobieren.</p>
             <div class="empty-actions">
-              <button class="btn primary" onClick=${() => setEditing('new')}>Erste Übung anlegen</button>
+              <button class="btn primary" onClick=${() => openEditor('new')}>Erste Übung anlegen</button>
               <button class="btn" onClick=${seedExamples}>Beispiel-Übungen laden</button>
             </div>
           </div>`
@@ -75,7 +80,7 @@ export function ExercisesPage({ sub, onSub }) {
             <section class="phase-section" key=${g.phase.key}>
               <h3 class="phase-title">${g.phase.label}</h3>
               <div class="card-list">
-                ${g.items.map((e) => html`<${ExerciseCard} key=${e.id} exercise=${e} onClick=${() => setEditing(e)} />`)}
+                ${g.items.map((e) => html`<${ExerciseCard} key=${e.id} exercise=${e} onClick=${() => openEditor(e)} />`)}
               </div>
             </section>`)}`}
     </div>

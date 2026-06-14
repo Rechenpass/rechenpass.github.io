@@ -4,9 +4,9 @@ import { Segmented } from '../../components/Segmented.js';
 import { BarChart, LineChart } from './Charts.js';
 import { lastPeriods, periodKey } from './statsUtils.js';
 
-const PERIODS = [{ value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
-const NOUN = { week: 'Woche', month: 'Monat', year: 'Jahr' };
-const SPAN = { week: 8, month: 6, year: 4 };
+const PERIODS = [{ value: 'day', label: 'Tag' }, { value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
+const NOUN = { day: 'Tag', week: 'Woche', month: 'Monat', year: 'Jahr' };
+const SPAN = { day: 7, week: 8, month: 6, year: 4 };
 const FILTERS = [{ value: 'all', label: 'Alle' }, { value: 'outdoor', label: 'Radausfahrt' }, { value: 'indoor', label: 'Indoor' }];
 
 const r1 = (n) => Math.round(n * 10) / 10;

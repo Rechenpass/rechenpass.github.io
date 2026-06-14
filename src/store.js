@@ -224,6 +224,19 @@ export function deleteSession(id) {
   persist();
 }
 
+export function updateSession(id, patch) {
+  state = { ...state, sessions: (state.sessions || []).map((s) => (s.id === id ? { ...s, ...patch } : s)) };
+  persist();
+}
+
+export function getSession(id) {
+  return (state.sessions || []).find((s) => s.id === id);
+}
+
+export function getRide(id) {
+  return (state.rides || []).find((r) => r.id === id);
+}
+
 // ---- Radtraining (Fahrten) ----
 export function addRide(data) {
   const ride = { id: uid(), createdAt: Date.now(), ...data };
@@ -289,6 +302,30 @@ export function removeWeekEntry(weekKey, day, entryId) {
   const wk = weeks[weekKey] || {};
   const dayList = (wk[day] || []).filter((e) => e.id !== entryId);
   state = { ...state, weeks: { ...weeks, [weekKey]: { ...wk, [day]: dayList } } };
+  persist();
+}
+
+// „Reset" einer erledigten Einheit: die erfasste Aktivität (Session/Fahrt) löschen und die
+// Verknüpfung am Wocheneintrag entfernen → der Eintrag steht wieder „offen". War der Eintrag
+// nur „spontan" (ohne ursprüngliche Planung), wird er ganz entfernt.
+export function resetWeekEntry(weekKey, day, entryId) {
+  const weeks = state.weeks || {};
+  const wk = weeks[weekKey] || {};
+  const list = wk[day] || [];
+  const entry = list.find((e) => e.id === entryId);
+  if (!entry) return;
+  let sessions = state.sessions || [];
+  let rides = state.rides || [];
+  if (entry.sessionId) sessions = sessions.filter((s) => s.id !== entry.sessionId);
+  if (entry.rideId) rides = rides.filter((r) => r.id !== entry.rideId);
+  const newList = entry.spontan
+    ? list.filter((e) => e.id !== entryId)
+    : list.map((e) => {
+        if (e.id !== entryId) return e;
+        const { sessionId, rideId, ...rest } = e;
+        return rest;
+      });
+  state = { ...state, sessions, rides, weeks: { ...weeks, [weekKey]: { ...wk, [day]: newList } } };
   persist();
 }
 

@@ -13,7 +13,7 @@ function phaseClass(phase) {
   return phase === 'WarmUp' ? 'warmup' : phase === 'CoolDown' ? 'cooldown' : 'training';
 }
 
-export function WorkoutPlayer({ plan, onExit }) {
+export function WorkoutPlayer({ plan, date, onExit }) {
   const [steps, setSteps] = useState(() => buildSteps(plan));
   const [i, setI] = useState(0);
   const [entries, setEntries] = useState([]);
@@ -24,6 +24,7 @@ export function WorkoutPlayer({ plan, onExit }) {
   const [now, setNow] = useState(Date.now());
   const [descOpen, setDescOpen] = useState(false); // Beschreibung wird nur auf Tipp als Sheet gezeigt
   const [prep, setPrep] = useState(true); // #29: 10-Sek-Countdown vor dem Start
+  const [toast, setToast] = useState(null); // kurzes Feedback (z. B. Extra-Satz)
   // Gesamtzeit läuft sekündlich mit (Wanduhr ab Start – passt zur gespeicherten durationSec).
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -54,7 +55,7 @@ export function WorkoutPlayer({ plan, onExit }) {
 
   const confirmSave = (editedEntries) => {
     const session = {
-      planId: plan.id, planName: plan.name, date: startRef.current,
+      planId: plan.id, planName: plan.name, date: date != null ? date : startRef.current,
       durationSec: Math.round((Date.now() - startRef.current) / 1000), entries: editedEntries,
     };
     saveSession(session);
@@ -126,6 +127,8 @@ export function WorkoutPlayer({ plan, onExit }) {
     if (!cur || cur.kind !== 'work') return;
     const newStep = { ...cur, setIndex: (cur.setCount || 1) + 1, extra: true };
     setSteps((prev) => { const ns = [...prev]; ns.splice(i + 1, 0, newStep); return ns; });
+    setToast('Extra-Satz hinzugefügt');
+    setTimeout(() => setToast(null), 1600);
   };
 
   const quit = () => {
@@ -162,7 +165,7 @@ export function WorkoutPlayer({ plan, onExit }) {
             : null}
         </div>
         ${step.type === 'time'
-          ? html`<${TimeWorkStep} key=${i} step=${step} onNext=${handleNext} onSkip=${() => handleNext(null)} onAddSet=${addSet} />`
+          ? html`<${TimeWorkStep} key=${i} step=${step} onNext=${handleNext} onSkip=${() => handleNext(null)} />`
           : html`<${RepsWorkStep} key=${i} step=${step} onNext=${handleNext} onSkip=${() => handleNext(null)} onAddSet=${addSet} />`}
       ` : html`
         <${RestStep} key=${i} step=${step} onNext=${handleNext} />
@@ -180,5 +183,6 @@ export function WorkoutPlayer({ plan, onExit }) {
           </div>
         </div>`
       : null}
+    ${toast ? html`<div class="added-toast">${toast}</div>` : null}
   </div>`;
 }

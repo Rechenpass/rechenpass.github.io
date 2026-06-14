@@ -11,10 +11,15 @@ export function buildSteps(plan) {
     .sort((a, b) => (PHASE_ORDER[a.ex.phase] - PHASE_ORDER[b.ex.phase]) || (a.idx - b.idx));
 
   const total = ordered.length;
+  // #11: Übungen je Phase zählen → Anzeige „Übung x/y" getrennt pro Rubrik (Warm-Up/Training/Cool-Down).
+  const phaseTotals = {};
+  ordered.forEach(({ ex }) => { phaseTotals[ex.phase] = (phaseTotals[ex.phase] || 0) + 1; });
+  const phaseSeen = {};
   const steps = [];
 
   ordered.forEach(({ it, ex }, exIndex) => {
     const sets = it.sets || 1;
+    phaseSeen[ex.phase] = (phaseSeen[ex.phase] || 0) + 1;
     const weighted = ex.group === 'Kurzhantel' || it.weight != null;
     const meta = {
       itemId: it.id, exerciseId: ex.id, exerciseName: ex.name, description: ex.description || '',
@@ -22,7 +27,7 @@ export function buildSteps(plan) {
       primaryMuscles: ex.primaryMuscles || [], secondaryMuscles: ex.secondaryMuscles || [], bodyRegions: ex.bodyRegions || [],
       setCount: sets, weighted, weight: it.weight ?? null,
       halfSignal: !!ex.halfSignal,
-      exerciseNo: exIndex + 1, exerciseTotal: total,
+      exerciseNo: phaseSeen[ex.phase], exerciseTotal: phaseTotals[ex.phase],
     };
     for (let s = 1; s <= sets; s++) {
       steps.push({ kind: 'work', ...meta, setIndex: s, targetReps: it.reps ?? null, targetDurationSec: it.durationSec ?? null });

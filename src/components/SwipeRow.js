@@ -2,11 +2,17 @@ import { html } from '../html.js';
 import { useState, useRef } from 'preact/hooks';
 import { Icon } from './Icon.js';
 
-// Zeile mit „nach links wischen" → rotes Papierkorb-Symbol → onDelete.
+// Zeile mit „nach links wischen" → enthüllt Aktions-Buttons rechts.
+// Standard: ein roter Papierkorb (onDelete). Optional `actions` = [{ icon, label, onClick, cls }]
+// für mehrere Aktionen (z. B. Edit · Reset · Löschen bei erledigten Einheiten).
 // Ein Tipp (ohne nennenswerte Horizontalbewegung) bleibt ein normaler Klick,
 // damit innenliegende Buttons (Play/Erfassen) weiter funktionieren.
-export function SwipeRow({ children, onDelete }) {
-  const REVEAL = 76;
+export function SwipeRow({ children, onDelete, actions }) {
+  const acts = (actions && actions.length)
+    ? actions
+    : [{ icon: 'trash', label: 'Löschen', onClick: onDelete, cls: 'del' }];
+  const BTN = 56; // Slot-Breite je Aktion (Kreis + Abstand)
+  const REVEAL = acts.length * BTN;
   const [dx, setDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const st = useRef(null);
@@ -31,9 +37,12 @@ export function SwipeRow({ children, onDelete }) {
   };
 
   return html`<div class="swipe-row">
-    <button class="swipe-del" style=${`width:${REVEAL}px`} onClick=${() => { setDx(0); onDelete(); }} aria-label="Löschen">
-      <${Icon} name="trash" size=${20} />
-    </button>
+    <div class="swipe-actions" style=${`width:${REVEAL}px`}>
+      ${acts.map((a) => html`<button key=${a.label} class=${'swipe-act ' + (a.cls || '')}
+        onClick=${() => { setDx(0); a.onClick && a.onClick(); }} aria-label=${a.label}>
+        <${Icon} name=${a.icon} size=${20} />
+      </button>`)}
+    </div>
     <div class=${'swipe-content' + (dragging ? ' dragging' : '')} style=${`transform:translateX(${dx}px)`}
       onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}>
       ${children}

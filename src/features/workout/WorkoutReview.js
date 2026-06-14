@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 
 // Abschluss-Kontrolle: alle erfassten Werte prüfen/korrigieren, ERST dann speichern.
-export function WorkoutReview({ entries, onConfirm, onCancel }) {
+export function WorkoutReview({ entries, onConfirm, onCancel, editMode }) {
   const [rows, setRows] = useState(() => entries.map((e) => ({ ...e })));
   const update = (idx, patch) => setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   const num = (v) => (v === '' || v == null ? null : Number(v));
@@ -20,10 +20,10 @@ export function WorkoutReview({ entries, onConfirm, onCancel }) {
   return html`<div class="screen">
     <header class="screen-header">
       <button class="iconbtn" onClick=${onCancel} aria-label="Zurück"><${Icon} name="back" /></button>
-      <h2>Training prüfen</h2>
+      <h2>${editMode ? 'Werte bearbeiten' : 'Training prüfen'}</h2>
     </header>
     <div class="screen-body">
-      <p class="muted">Stimmt alles? Du kannst die Werte noch anpassen. Erst mit „Speichern“ wird das Training gespeichert und in die Statistik übernommen.</p>
+      <p class="muted">${editMode ? 'Passe die erfassten Werte an und speichere.' : 'Stimmt alles? Du kannst die Werte noch anpassen. Wähle dann „Speichern & abschließen“.'}</p>
 
       ${groups.map((g) => html`
         <div class="stats-section review-card" key=${g.name}>
@@ -53,9 +53,9 @@ export function WorkoutReview({ entries, onConfirm, onCancel }) {
         </div>`)}
 
       <button class="btn primary full big-btn" onClick=${() => onConfirm(rows)}>
-        <${Icon} name="check" size=${20} /> Speichern & abschließen
+        <${Icon} name="check" size=${20} /> ${editMode ? 'Speichern' : 'Speichern & abschließen'}
       </button>
-      <button class="btn full" onClick=${onCancel}>Training verwerfen</button>
+      <button class="btn full" onClick=${onCancel}>${editMode ? 'Abbrechen' : 'Training verwerfen'}</button>
     </div>
   </div>`;
 }

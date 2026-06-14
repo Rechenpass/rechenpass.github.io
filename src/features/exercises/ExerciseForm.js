@@ -101,12 +101,12 @@ export function ExerciseForm({ initial, onClose, onSaved }) {
       </div>
 
       <div class="field">
-        <span class="field-label">Primäre Muskelgruppen <span class="muted">${primaryOptional ? '(optional)' : `(${d.primaryMuscles.length}${d.primaryMuscles.length > 5 ? ' gewählt' : '/5'})`}</span></span>
+        <span class="field-label">Primäre Muskelgruppen <span class="muted">${(primaryOptional ? '(optional) · ' : '· ') + d.primaryMuscles.length + '/5'}</span></span>
         <${MuscleSelect} value=${d.primaryMuscles} onChange=${(v) => set({ primaryMuscles: v })} max=${5} />
       </div>
 
       <div class="field">
-        <span class="field-label">Sekundäre Muskelgruppen <span class="muted">(${d.secondaryMuscles.length}${d.secondaryMuscles.length > 5 ? ' gewählt' : '/5'})</span></span>
+        <span class="field-label">Sekundäre Muskelgruppen <span class="muted">${(primaryOptional ? '(optional) · ' : '· ') + d.secondaryMuscles.length + '/5'}</span></span>
         <${MuscleSelect} value=${d.secondaryMuscles} onChange=${(v) => set({ secondaryMuscles: v })} max=${5} />
       </div>
 

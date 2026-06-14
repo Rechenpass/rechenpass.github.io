@@ -36,14 +36,11 @@ export function useEntryDeletion() {
   const deleteModal = deleting ? html`
     <div class="modal-overlay" onClick=${() => setDeleting(null)}>
       <div class="modal-sheet" onClick=${(ev) => ev.stopPropagation()}>
-        <div class="modal-title">„${entryLabel(deleting.entry)}" ist bereits erledigt</div>
-        <button class="modal-opt" onClick=${() => finish(false)}>
-          <${Icon} name="x" size=${18} /> Nur aus dem Plan entfernen
-        </button>
+        <div class="modal-title">„${entryLabel(deleting.entry)}" löschen?</div>
         <button class="modal-opt danger" onClick=${() => finish(true)}>
-          <${Icon} name="trash" size=${18} /> Auch die erfasste Einheit löschen
+          <${Icon} name="trash" size=${18} /> Einheit löschen
         </button>
-        <p class="hint">„Auch löschen" entfernt das erfasste Training bzw. die Fahrt dauerhaft – auch aus der Statistik.</p>
+        <p class="hint">Entfernt das erfasste Training bzw. die Fahrt dauerhaft – auch aus der Statistik.</p>
         <button class="btn full" onClick=${() => setDeleting(null)}>Abbrechen</button>
       </div>
     </div>` : null;

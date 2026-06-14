@@ -17,10 +17,11 @@ function Stepper({ label, value, onChange, step = 1, min = 0, suffix = '' }) {
 }
 
 // #36: Sekundär-Aktionen unter dem Haupt-Button: Satz überspringen / Extra-Satz einschieben.
+// Extra-Satz nur bei Satz/Wdh.-Übungen (onAddSet gesetzt); bei Zeit-Übungen steht „Überspringen" allein mittig.
 function ExtraActions({ onSkip, onAddSet }) {
   return html`<div class="work-extra-actions">
     <button onClick=${onSkip}>Überspringen</button>
-    <button onClick=${onAddSet}>+ Extra-Satz</button>
+    ${onAddSet ? html`<button onClick=${onAddSet}>+ Extra-Satz</button>` : null}
   </div>`;
 }
 
@@ -45,7 +46,7 @@ export function RepsWorkStep({ step, onNext, onSkip, onAddSet }) {
 }
 
 // Zeit-Übung: Countdown, am Ende automatisch weiter; früher „Fertig” möglich.
-export function TimeWorkStep({ step, onNext, onSkip, onAddSet }) {
+export function TimeWorkStep({ step, onNext, onSkip }) {
   const finish = () => { beep(); vibrate(200); onNext({ durationSec: step.targetDurationSec }); };
   const { remaining, running, pause, resume } = useCountdown(step.targetDurationSec || 0, finish);
 
@@ -67,7 +68,7 @@ export function TimeWorkStep({ step, onNext, onSkip, onAddSet }) {
 
   // #31: Countdown-Ticks in den letzten 3 Sekunden.
   useEffect(() => {
-    if (remaining > 0 && remaining <= 3) beep(600, 70);
+    if (remaining > 0 && remaining <= 5) beep(600, 70);
   }, [remaining]);
 
   return html`<div class="work-body">
@@ -82,7 +83,7 @@ export function TimeWorkStep({ step, onNext, onSkip, onAddSet }) {
         <${Icon} name="check" size=${18} /> Fertig
       </button>
     </div>
-    <${ExtraActions} onSkip=${onSkip} onAddSet=${onAddSet} />
+    <${ExtraActions} onSkip=${onSkip} />
   </div>`;
 }
 
@@ -90,7 +91,7 @@ export function TimeWorkStep({ step, onNext, onSkip, onAddSet }) {
 export function RestStep({ step, onNext }) {
   const done = () => { beep(660); vibrate(150); onNext(null); };
   const { remaining, running, pause, resume } = useCountdown(step.restSec || 0, done);
-  useEffect(() => { if (remaining > 0 && remaining <= 3) beep(600, 70); }, [remaining]);
+  useEffect(() => { if (remaining > 0 && remaining <= 5) beep(600, 70); }, [remaining]);
   return html`<div class="work-body">
     <div class="rest-title">Pause</div>
     <div class=${'timer' + (remaining <= 5 ? ' ending' : '')}>${formatClock(remaining)}</div>
@@ -107,7 +108,7 @@ export function RestStep({ step, onNext }) {
 // #29: 10-Sekunden-Countdown vor dem Start, bevor die erste (Warm-Up-)Übung läuft.
 export function PrepCountdown({ planName, onDone, onSkip, onQuit }) {
   const { remaining } = useCountdown(10, onDone);
-  useEffect(() => { if (remaining > 0 && remaining <= 3) beep(600, 70); }, [remaining]);
+  useEffect(() => { if (remaining > 0 && remaining <= 5) beep(600, 70); }, [remaining]);
   return html`<div class="screen workout">
     <header class="screen-header">
       <button class="iconbtn" onClick=${onQuit} aria-label="Abbrechen"><${Icon} name="x" /></button>

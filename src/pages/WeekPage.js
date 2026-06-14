@@ -44,7 +44,11 @@ export function WeekPage() {
 
       <div class="week-list">
         ${WEEKDAYS.map((d, di) => {
-          const entries = week[d.key] || [];
+          // Feste Reihenfolge: Krafttraining zuerst, dann Radtraining; je alphabetisch.
+          const entries = [...(week[d.key] || [])].sort((a, b) => {
+            const rank = (e) => (e.type === 'cycling' ? 1 : 0);
+            return (rank(a) - rank(b)) || entryLabel(a).localeCompare(entryLabel(b), 'de');
+          });
           const dayDate = new Date(parseDateInput(weekKey));
           dayDate.setDate(dayDate.getDate() + di);
           dayDate.setHours(0, 0, 0, 0);

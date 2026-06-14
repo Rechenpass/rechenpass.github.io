@@ -10,9 +10,9 @@ import { CyclingStats } from './CyclingStats.js';
 import { BodyWeightStats } from './BodyWeightStats.js';
 import { SweetsStats } from './SweetsStats.js';
 
-const PERIODS = [{ value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
-const NOUN = { week: 'Woche', month: 'Monat', year: 'Jahr' };
-const SPAN = { week: 8, month: 6, year: 4 };
+const PERIODS = [{ value: 'day', label: 'Tag' }, { value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
+const NOUN = { day: 'Tag', week: 'Woche', month: 'Monat', year: 'Jahr' };
+const SPAN = { day: 7, week: 8, month: 6, year: 4 };
 
 // #37: Übersicht – Kraft und Rad getrennt gezählt, Einheiten pro Zeitraum, gemeinsamer Umschalter.
 function OverviewStats({ sessions, rides }) {
