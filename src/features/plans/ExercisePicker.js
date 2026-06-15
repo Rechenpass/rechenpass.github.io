@@ -57,13 +57,13 @@ export function ExercisePicker({ onAdd, onClose, addedCount }) {
               <h3 class="phase-title">${g.phase.label}</h3>
               <div class="card-list">
                 ${g.items.map((e) => html`
-                  <div class="card pick-row" key=${e.id}>
+                  <button class="card pick-row" key=${e.id} onClick=${() => add(e)} aria-label=${`„${e.name}" hinzufügen`}>
                     <div class="card-main">
                       <div class="card-title">${e.name}</div>
                       <div class="card-sub">${(e.primaryMuscles || []).join(', ') || '—'} · ${e.type === 'time' ? `${e.defaultDurationSec ?? '–'} s` : `${e.defaultSets ?? '–'}×${e.defaultReps ?? '–'}`}</div>
                     </div>
-                    <button class="iconbtn primary" onClick=${() => add(e)} aria-label="hinzufügen"><${Icon} name="plus" size=${20} /></button>
-                  </div>`)}
+                    <span class="pick-add"><${Icon} name="plus" size=${20} /></span>
+                  </button>`)}
               </div>
             </section>`)}
       `}

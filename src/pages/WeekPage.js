@@ -33,10 +33,7 @@ export function WeekPage() {
       <div class="week-switch">
         <button class="iconbtn" onClick=${() => setWeekKey(shiftWeekKey(weekKey, -1))} aria-label="Vorherige Woche"><${Icon} name="back" /></button>
         <div class="week-switch-center">
-          <div class="week-kwline">
-            <span class="week-kw">KW ${kw}</span>
-            ${thisWeek ? html`<span class="week-now">Diese Woche</span>` : null}
-          </div>
+          <span class=${'week-kw-pill' + (thisWeek ? ' now' : '')}>KW ${kw}</span>
           <div class="week-range">${weekRangeLabel(weekKey)}</div>
         </div>
         <button class="iconbtn" onClick=${() => setWeekKey(shiftWeekKey(weekKey, 1))} aria-label="Nächste Woche"><${Icon} name="forward" /></button>
@@ -54,11 +51,11 @@ export function WeekPage() {
           dayDate.setHours(0, 0, 0, 0);
           const isPast = dayDate.getTime() < todayTs;
           const dateStr = dayDate.getDate() + '.' + (dayDate.getMonth() + 1) + '.';
-          return html`<div class="day-card" key=${d.key}>
+          return html`<div class=${'day-card' + (entries.length === 0 ? ' rest' : '')} key=${d.key}>
             <div class="day-head">
               <span class="day-name">${d.label}<span class="day-date">, ${dateStr}</span></span>
               <button class="iconbtn small" onClick=${() => setAdding(d.key)} aria-label="Eintrag hinzufügen">
-                <${Icon} name="plus" size=${18} />
+                <${Icon} name="list" size=${18} />
               </button>
             </div>
             ${entries.length === 0
@@ -67,10 +64,10 @@ export function WeekPage() {
                   ${entries.map((e) => {
                     const status = (e.sessionId || e.rideId) ? 'done' : (isPast ? 'missed' : 'open');
                     return html`
-                    <div class=${'week-chip ' + (e.type === 'cycling' ? (e.rideType === 'indoor' ? 'indoor' : 'cycling') : 'strength')} key=${e.id}>
-                      <${Icon} name=${e.type === 'cycling' ? 'bike' : 'dumbbell'} size=${15} />
+                    <div class=${'week-chip ' + status} key=${e.id}>
+                      ${status === 'done' ? html`<${Icon} name="check" size=${15} />`
+                        : status === 'missed' ? html`<${Icon} name="alert" size=${15} />` : null}
                       <span>${entryLabel(e)}</span>
-                      ${status === 'done' ? html`<span class="chip-check"><${Icon} name="check" size=${14} /></span>` : null}
                       <button class="chip-x" onClick=${() => requestDelete(weekKey, d.key, e, status)} aria-label="entfernen">
                         <${Icon} name="x" size=${13} />
                       </button>
@@ -85,7 +82,10 @@ export function WeekPage() {
     ${adding ? html`
       <div class="modal-overlay" onClick=${() => setAdding(null)}>
         <div class="modal-sheet" onClick=${(ev) => ev.stopPropagation()}>
-          <div class="modal-title">Zum ${(WEEKDAYS.find((w) => w.key === adding) || {}).label} hinzufügen</div>
+          <div class="sheet-head">
+            <div class="modal-title">Zum ${(WEEKDAYS.find((w) => w.key === adding) || {}).label} hinzufügen</div>
+            <button class="iconbtn small" onClick=${() => setAdding(null)} aria-label="Schließen"><${Icon} name="x" size=${18} /></button>
+          </div>
           <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'outdoor' }); setAdding(null); }}>
             <${Icon} name="bike" size=${18} /> Radausfahrt
           </button>

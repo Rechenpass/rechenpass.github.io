@@ -1,8 +1,9 @@
-import { render } from 'preact';
+import { render, Fragment } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { html } from './html.js';
 import { BottomNav } from './components/BottomNav.js';
 import { Icon } from './components/Icon.js';
+import { ConfirmHost } from './components/confirmHost.js';
 import { HomePage } from './features/home/HomePage.js';
 import { WorkoutPage } from './features/workout/WorkoutPage.js';
 import { WeekPage } from './pages/WeekPage.js';
@@ -12,9 +13,10 @@ import { WorkoutPlayer } from './features/workout/WorkoutPlayer.js';
 import { RideForm } from './features/cycling/RideForm.js';
 import { WorkoutReview } from './features/workout/WorkoutReview.js';
 import { updateSession } from './store.js';
+import { isoDate } from './dateUtils.js';
 import { unlockAudio } from './features/workout/workoutRuntime.js';
 
-const APP_VERSION = 'v6';
+const APP_VERSION = 'v7';
 
 function App() {
   const [tab, setTab] = useState('heute');
@@ -22,6 +24,7 @@ function App() {
   const [rideForm, setRideForm] = useState(null);       // null | 'new' | ride
   const [editSession, setEditSession] = useState(null); // erledigtes Krafttraining nachträglich prüfen/korrigieren
   const [pendingDate, setPendingDate] = useState(null); // Datum für rückwirkendes Erfassen (vergangene Tage)
+  const [selectedIso, setSelectedIso] = useState(() => isoDate(Date.now())); // gewählter Dashboard-Tag (übersteht das Erfassen)
   const [updateReady, setUpdateReady] = useState(false);
 
   useEffect(() => {
@@ -69,7 +72,8 @@ function App() {
   let page;
   if (tab === 'heute') {
     page = html`<${HomePage} onStartWorkout=${startWorkout} onLogRide=${logRideFromHome} onGoTraining=${() => setTab('training')}
-      onEditRide=${(ride) => setRideForm(ride)} onEditSession=${setEditSession} />`;
+      onEditRide=${(ride) => setRideForm(ride)} onEditSession=${setEditSession}
+      selectedIso=${selectedIso} setSelectedIso=${setSelectedIso} />`;
   } else if (tab === 'training') {
     page = html`<${WorkoutPage} onStartWorkout=${startWorkout} />`;
   } else if (tab === 'week') {
@@ -91,4 +95,4 @@ function App() {
     </div>`;
 }
 
-render(html`<${App} />`, document.getElementById('app'));
+render(html`<${Fragment}><${App} /><${ConfirmHost} /></${Fragment}>`, document.getElementById('app'));

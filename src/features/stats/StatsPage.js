@@ -34,11 +34,11 @@ function OverviewStats({ sessions, rides }) {
   return html`<div class="stats-views">
     <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
     <div class="stats-section">
-      <h3><span class="ov-dot" style="background:var(--accent)"></span>Kraft pro ${NOUN[period]}</h3>
+      <h3><span class="ov-dot" style="background:var(--accent)"></span>Krafttraining pro ${NOUN[period]}</h3>
       <${BarChart} data=${bars(sessions)} />
     </div>
     <div class="stats-section">
-      <h3><span class="ov-dot" style="background:var(--success)"></span>Rad pro ${NOUN[period]}</h3>
+      <h3><span class="ov-dot" style="background:var(--success)"></span>Radtraining pro ${NOUN[period]}</h3>
       <${BarChart} data=${bars(rides)} color="var(--success)" />
     </div>
   </div>`;
@@ -69,7 +69,7 @@ function KraftStats({ sessions }) {
 
   return html`<div class="stats-views">
     <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
-    <div class="stats-section"><h3>Trainings pro ${NOUN[period]}</h3><${BarChart} data=${trainBars} /></div>
+    <div class="stats-section"><h3>Krafttraining pro ${NOUN[period]}</h3><${BarChart} data=${trainBars} /></div>
     <div class="stats-section">
       <h3>Häufigkeit Muskelgruppen</h3>
       <div class="stats-caption">Sätze je primär trainierter Muskelgruppe (gesamt)</div>

@@ -11,6 +11,7 @@ const PILL = { WarmUp: 'warmup', Training: 'training', CoolDown: 'cooldown' };
 export function PlansPage({ sub, onSub }) {
   const state = useStore();
   const [editing, setEditing] = useState(null); // null | 'new' | plan
+  const [openId, setOpenId] = useState(null);    // aufgeklappte Plan-Card (Akkordeon)
 
   // Scroll-Position der Liste merken und nach dem Schließen des Editors wiederherstellen.
   const scrollRef = useRef(0);
@@ -40,19 +41,30 @@ export function PlansPage({ sub, onSub }) {
         <div class="card-list">
           ${state.plans.map((p) => {
             const groups = groupItemsByPhase(p.items);
-            return html`<button class="card plan-card" key=${p.id} onClick=${() => openEditor(p)}>
-              <div class="card-title">${p.name}</div>
-              <div class="plan-meta">${p.items.length} ${p.items.length === 1 ? 'Übung' : 'Übungen'} · ca. ${estimateMinutes(p.items)} min</div>
-              <div class="plan-phases">
-                ${groups.map((g) => html`<div class="plan-phase" key=${g.phase.key}>
-                  <div class="plan-phase-head">
-                    <span class=${'phase-pill ' + PILL[g.phase.key]}>${g.phase.label}</span>
-                    <span class="plan-phase-count">${g.entries.length} ${g.entries.length === 1 ? 'Übung' : 'Übungen'}</span>
-                  </div>
-                  <div class="plan-phase-exs">${g.entries.map((e) => (e.exercise ? e.exercise.name : 'Gelöschte Übung')).join(', ')}</div>
-                </div>`)}
+            const open = openId === p.id;
+            const phaseNodes = [];
+            groups.forEach((g, i) => {
+              if (i > 0) phaseNodes.push(html`<div class="plan-divider" key=${'d' + i}></div>`);
+              phaseNodes.push(html`<div class="plan-phase" key=${g.phase.key}>
+                <div class="plan-phase-head">
+                  <span class=${'phase-pill ' + PILL[g.phase.key]}>${g.phase.label}</span>
+                  <span class="plan-phase-count">${g.entries.length} ${g.entries.length === 1 ? 'Übung' : 'Übungen'}</span>
+                </div>
+                <div class="plan-phase-exs">${g.entries.map((e) => (e.exercise ? e.exercise.name : 'Gelöschte Übung')).join(', ')}</div>
+              </div>`);
+            });
+            return html`<div class="card plan-card" key=${p.id}>
+              <div class="plan-card-head">
+                <button class="plan-card-title" onClick=${() => openEditor(p)}>
+                  <div class="card-title">${p.name}</div>
+                  <div class="plan-meta">Dauer ca. ${estimateMinutes(p.items)} Minuten</div>
+                </button>
+                <button class="iconbtn small" onClick=${() => setOpenId(open ? null : p.id)} aria-label=${open ? 'Einklappen' : 'Aufklappen'}>
+                  <${Icon} name=${open ? 'up' : 'down'} size=${20} />
+                </button>
               </div>
-            </button>`;
+              ${open ? html`<div class="plan-phases">${phaseNodes}</div>` : null}
+            </div>`;
           })}
         </div>
       `}

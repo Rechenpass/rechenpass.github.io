@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon.js';
 import { Segmented } from '../../components/Segmented.js';
 import { AutoTextarea } from '../../components/AutoTextarea.js';
 import { addRide, updateRide, deleteRide } from '../../store.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 import { isoDate, todayInput, parseDateInput } from '../../dateUtils.js';
 
 function NumberField({ label, value, onChange, step, placeholder }) {
@@ -59,9 +60,10 @@ export function RideForm({ initial, initialDate, onClose }) {
     onClose();
   };
 
-  const remove = () => {
-    if (confirm('Diese Fahrt wirklich löschen?')) { deleteRide(initial.id); onClose(); }
-  };
+  const remove = () => confirmAsk({
+    title: 'Fahrt löschen?', message: 'Diese Fahrt wirklich löschen?', confirmLabel: 'Löschen',
+    onConfirm: () => { deleteRide(initial.id); onClose(); },
+  });
 
   return html`<div class="screen">
     <header class="screen-header">

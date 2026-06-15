@@ -16,16 +16,8 @@ function Stepper({ label, value, onChange, step = 1, min = 0, suffix = '' }) {
   </div>`;
 }
 
-// #36: Sekundär-Aktionen unter dem Haupt-Button: Satz überspringen / Extra-Satz einschieben.
-// Extra-Satz nur bei Satz/Wdh.-Übungen (onAddSet gesetzt); bei Zeit-Übungen steht „Überspringen" allein mittig.
-function ExtraActions({ onSkip, onAddSet }) {
-  return html`<div class="work-extra-actions">
-    <button onClick=${onSkip}>Überspringen</button>
-    ${onAddSet ? html`<button onClick=${onAddSet}>+ Extra-Satz</button>` : null}
-  </div>`;
-}
-
 // Satz-Übung: Zielwert anzeigen, tatsächliche Wdh./Gewicht erfassen, „Satz fertig“.
+// Darunter Button-Gruppe „Extrasatz“ (nur bei Wdh.-Übungen) + „Überspringen“ im Pause-Look.
 export function RepsWorkStep({ step, onNext, onSkip, onAddSet }) {
   const [reps, setReps] = useState(step.targetReps || 0);
   const [weight, setWeight] = useState(step.weight ?? 0);
@@ -41,7 +33,10 @@ export function RepsWorkStep({ step, onNext, onSkip, onAddSet }) {
     <button class="btn primary full big-btn" onClick=${() => onNext({ reps, weight: step.weighted ? weight : null })}>
       <${Icon} name="check" size=${20} /> Satz fertig
     </button>
-    <${ExtraActions} onSkip=${onSkip} onAddSet=${onAddSet} />
+    <div class="work-btn-row">
+      ${onAddSet ? html`<button class="btn" onClick=${onAddSet}><${Icon} name="plus" size=${18} /> Extrasatz</button>` : null}
+      <button class="btn" onClick=${onSkip}>Überspringen</button>
+    </div>
   </div>`;
 }
 
@@ -75,15 +70,12 @@ export function TimeWorkStep({ step, onNext, onSkip }) {
     <div class=${'timer' + (remaining <= 5 ? ' ending' : '')}>${formatClock(remaining)}</div>
     ${sideHint ? html`<div class="half-hint">↔ Seite / Richtung wechseln</div>` : null}
     ${step.extra ? html`<div class="big-label">Extra-Satz</div>` : (step.setCount > 1 ? html`<div class="big-label">Satz ${step.setIndex}/${step.setCount}</div>` : null)}
-    <div class="timer-controls">
+    <div class="work-btn-row">
       ${running
         ? html`<button class="btn" onClick=${pause}><${Icon} name="pause" size=${18} /> Pause</button>`
         : html`<button class="btn" onClick=${resume}><${Icon} name="play" size=${18} /> Weiter</button>`}
-      <button class="btn primary" onClick=${() => onNext({ durationSec: (step.targetDurationSec || 0) - remaining })}>
-        <${Icon} name="check" size=${18} /> Fertig
-      </button>
+      <button class="btn" onClick=${onSkip}>Überspringen</button>
     </div>
-    <${ExtraActions} onSkip=${onSkip} />
   </div>`;
 }
 
@@ -95,12 +87,15 @@ export function RestStep({ step, onNext }) {
   return html`<div class="work-body">
     <div class="rest-title">Pause</div>
     <div class=${'timer' + (remaining <= 5 ? ' ending' : '')}>${formatClock(remaining)}</div>
-    <div class="rest-next">${step.nextLabel}: <b>${step.nextName}</b></div>
-    <div class="timer-controls">
+    <div class="rest-next">
+      <span class="rest-next-label">${step.nextLabel}</span>
+      <span class="rest-next-name">${step.nextName}</span>
+    </div>
+    <div class="work-btn-row rest-actions">
       ${running
         ? html`<button class="btn" onClick=${pause}><${Icon} name="pause" size=${18} /> Pause</button>`
         : html`<button class="btn" onClick=${resume}><${Icon} name="play" size=${18} /> Weiter</button>`}
-      <button class="btn primary" onClick=${() => onNext(null)}>Überspringen</button>
+      <button class="btn" onClick=${() => onNext(null)}>Überspringen</button>
     </div>
   </div>`;
 }

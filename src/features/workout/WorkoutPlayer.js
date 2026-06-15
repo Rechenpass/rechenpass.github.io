@@ -8,6 +8,7 @@ import { RepsWorkStep, TimeWorkStep, RestStep, PrepCountdown } from './WorkoutSt
 import { WorkoutSummary } from './WorkoutSummary.js';
 import { WorkoutReview } from './WorkoutReview.js';
 import { beep } from './workoutRuntime.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 
 function phaseClass(phase) {
   return phase === 'WarmUp' ? 'warmup' : phase === 'CoolDown' ? 'cooldown' : 'training';
@@ -62,9 +63,9 @@ export function WorkoutPlayer({ plan, date, onExit }) {
     setReviewEntries(null);
     setFinished(session);
   };
-  const cancelReview = () => {
-    if (confirm('Training verwerfen? Es wird nicht gespeichert.')) onExit();
-  };
+  const cancelReview = () => confirmAsk({
+    title: 'Training verwerfen?', message: 'Es wird nicht gespeichert.', confirmLabel: 'Verwerfen', onConfirm: onExit,
+  });
 
   if (steps.length === 0) {
     return html`<div class="screen">
@@ -87,7 +88,7 @@ export function WorkoutPlayer({ plan, date, onExit }) {
   if (prep) {
     return html`<${PrepCountdown} planName=${plan.name}
       onDone=${() => setPrep(false)} onSkip=${() => setPrep(false)}
-      onQuit=${() => { if (confirm('Workout abbrechen? Der Fortschritt wird nicht gespeichert.')) onExit(); }} />`;
+      onQuit=${() => confirmAsk({ title: 'Workout abbrechen?', message: 'Der Fortschritt wird nicht gespeichert.', confirmLabel: 'Verwerfen', onConfirm: onExit })} />`;
   }
 
   const step = steps[i];
@@ -131,9 +132,9 @@ export function WorkoutPlayer({ plan, date, onExit }) {
     setTimeout(() => setToast(null), 1600);
   };
 
-  const quit = () => {
-    if (confirm('Workout abbrechen? Der Fortschritt wird nicht gespeichert.')) onExit();
-  };
+  const quit = () => confirmAsk({
+    title: 'Workout abbrechen?', message: 'Der Fortschritt wird nicht gespeichert.', confirmLabel: 'Verwerfen', onConfirm: onExit,
+  });
 
   return html`<div class="screen workout">
     <header class="screen-header">

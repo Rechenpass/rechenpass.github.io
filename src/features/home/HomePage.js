@@ -1,12 +1,13 @@
 import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
-import { useStore, getPlan, getSession, getRide, resetWeekEntry } from '../../store.js';
+import { useStore, getPlan, getSession, getRide, resetWeekEntry, lastBackupTs } from '../../store.js';
 import { Icon } from '../../components/Icon.js';
 import { WEEKDAYS } from '../../constants.js';
 import { isoDate, parseDateInput, weekKeyFor, dayKeyFor, startOfWeek, weekRangeLabel } from '../../dateUtils.js';
 import { SettingsPage } from '../settings/SettingsPage.js';
 import { SwipeRow } from '../../components/SwipeRow.js';
 import { useEntryDeletion } from '../../components/useEntryDeletion.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 
 const DAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -21,6 +22,12 @@ function todayLabel() {
   const d = new Date();
   return `${DAYS[d.getDay()]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
 }
+// Bezeichnung eines Wocheneintrags (für Sortierung & Anzeige).
+function entryLabel(e) {
+  if (e.type === 'cycling') return e.rideType === 'indoor' ? 'Indoor-Training' : 'Radausfahrt';
+  const p = getPlan(e.planId);
+  return p ? p.name : 'Plan gelöscht';
+}
 // Ein Fortschritts-Strang (Kraft ODER Rad): erledigt (grün) · überfällig (rot) · offen (grau).
 function ProgressStrand({ icon, label, done, overdue, planned }) {
   const segs = [];
@@ -34,7 +41,7 @@ function ProgressStrand({ icon, label, done, overdue, planned }) {
   let statusCls = 'open';
   let statusIcon = 'clock';
   let text;
-  if (behind > 0) { statusCls = 'behind'; statusIcon = 'alert'; text = 'Rückstand'; }
+  if (behind > 0) { statusCls = 'behind'; statusIcon = 'alert'; text = `Rückstand (${behind})`; }
   else if (open <= 0) { statusCls = 'ok'; statusIcon = 'check'; text = 'Erledigt'; }
   else { text = `Offen (${open}/${planned})`; }
 
@@ -49,17 +56,15 @@ function ProgressStrand({ icon, label, done, overdue, planned }) {
   </div>`;
 }
 
-export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, onEditSession }) {
+export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, onEditSession, selectedIso, setSelectedIso }) {
   const state = useStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [selectedIso, setSelectedIso] = useState(() => isoDate(Date.now()));
   const { requestDelete, deleteModal } = useEntryDeletion();
   if (settingsOpen) return html`<${SettingsPage} onClose=${() => setSettingsOpen(false)} />`;
   // Gewählter Tag (Dropdown der letzten 7 Tage) – steuert die obere „Heute geplant"-Card.
   const todayIso = isoDate(Date.now());
   const isToday = selectedIso === todayIso;
   const selectedTs = parseDateInput(selectedIso);
-  const selDate = new Date(selectedTs);
   const weekKey = weekKeyFor(selectedTs);
   const dayKey = dayKeyFor(selectedTs);
   const week = (state.weeks || {})[weekKey] || {};
@@ -73,8 +78,13 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
     dayOptions.push({ iso: isoDate(d.getTime()), label: i === 0 ? `Heute · ${label}` : label });
   }
 
+  // Reihenfolge wie im Wochenplan: Kraft zuerst, dann Rad, je alphabetisch.
+  const sortedTodays = [...todays].sort((a, b) => {
+    const rank = (e) => (e.type === 'cycling' ? 1 : 0);
+    return (rank(a) - rank(b)) || entryLabel(a).localeCompare(entryLabel(b), 'de');
+  });
   // „Erledigt?" – über die Verknüpfung (Session/Fahrt) am Eintrag.
-  const todaysWithDone = todays.map((e) => ({ e, done: !!(e.sessionId || e.rideId) }));
+  const todaysWithDone = sortedTodays.map((e) => ({ e, done: !!(e.sessionId || e.rideId) }));
 
   // Fortschritt Woche – IMMER die aktuelle Woche (unabhängig vom gewählten Tag), getrennt Kraft/Rad
   const curWeekKey = weekKeyFor(Date.now());
@@ -97,6 +107,12 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
 
   const doneBadge = html`<span class="today-done"><${Icon} name="check" size=${16} /> Erledigt</span>`;
 
+  // Backup-Erinnerung: nach 30 Tagen ohne Export/Import (nur wenn überhaupt Daten vorhanden sind).
+  const hasData = (state.exercises || []).length + (state.plans || []).length + (state.sessions || []).length + (state.rides || []).length > 0;
+  const lastBk = lastBackupTs();
+  const daysSinceBackup = lastBk ? Math.floor((Date.now() - lastBk) / 86400000) : null;
+  const showBackupHint = hasData && (lastBk === null || daysSinceBackup >= 30);
+
   return html`<div class="screen">
     <header class="screen-header">
       <h2>Dashboard</h2>
@@ -107,12 +123,17 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
         ${dayOptions.map((o) => html`<option value=${o.iso}>${o.label}</option>`)}
       </select>
 
+      ${showBackupHint ? html`<button class="backup-hint" onClick=${() => setSettingsOpen(true)}>
+        <${Icon} name="download" size=${18} />
+        <span>${lastBk === null ? 'Noch kein Backup gemacht – jetzt sichern' : `Letztes Backup vor ${daysSinceBackup} Tagen – jetzt sichern`}</span>
+      </button>` : null}
+
       <div class="stats-section">
-        <h3>${isToday ? 'Heute geplant' : `${DAYS[selDate.getDay()]}, ${selDate.getDate()}. ${MONTHS[selDate.getMonth()]}`}</h3>
+        <h3>${isToday ? 'Heute geplant' : 'Geplant'}</h3>
         ${todays.length === 0
           ? html`<p class="stats-caption">${isToday ? 'Kein Training geplant – Ruhetag. Du kannst unten jederzeit selbst starten.' : 'An diesem Tag war nichts geplant.'}</p>`
           : todaysWithDone.map(({ e, done }) => {
-            const onDel = () => requestDelete(weekKey, dayKey, e, done ? 'done' : 'open');
+            const onDel = () => requestDelete(weekKey, dayKey, e, done ? 'done' : (isToday ? 'open' : 'missed'));
             // Erledigte Einheit: Wisch nach links → Bearbeiten · Zurücksetzen · Löschen.
             const actions = done ? [
               { icon: 'edit', label: 'Bearbeiten', cls: 'edit', onClick: () => {
@@ -120,7 +141,7 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
                   else { const r = getRide(e.rideId); if (r) onEditRide(r); }
               } },
               { icon: 'reset', label: 'Zurücksetzen', cls: 'reset', onClick: () => {
-                  if (confirm('Erfasste Werte löschen und Einheit zurücksetzen? Sie gilt danach wieder als offen.')) resetWeekEntry(weekKey, dayKey, e.id);
+                  confirmAsk({ title: 'Einheit zurücksetzen?', message: 'Erfasste Werte werden gelöscht (auch aus der Statistik). Die Einheit gilt danach wieder als offen.', confirmLabel: 'Zurücksetzen', icon: 'reset', onConfirm: () => resetWeekEntry(weekKey, dayKey, e.id) });
               } },
               { icon: 'trash', label: 'Löschen', cls: 'del', onClick: onDel },
             ] : null;
@@ -153,10 +174,10 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
       </div>
 
       <div class="stats-section">
-        <h3>Doch was anderes?</h3>
+        <h3>Spontan starten</h3>
         <div class="home-actions">
-          <button class="btn full" onClick=${onGoTraining}><${Icon} name="dumbbell" size=${18} /> Training auswählen</button>
-          <button class="btn full" onClick=${() => onLogRide()}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
+          ${isToday ? html`<button class="btn full" onClick=${onGoTraining}><${Icon} name="dumbbell" size=${18} /> Training auswählen</button>` : null}
+          <button class="btn full" onClick=${() => onLogRide(dateForNew)}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
         </div>
       </div>
 

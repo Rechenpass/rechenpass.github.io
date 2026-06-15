@@ -221,6 +221,12 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 .plan-phase-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .plan-phase-count { font-size: 13px; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .plan-phase-exs { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.plan-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+.plan-card-title { flex: 1; min-width: 0; background: none; border: none; padding: 0; text-align: left; cursor: pointer; color: inherit; }
+.plan-card-title .plan-meta { margin-top: 2px; }
+.plan-card .plan-phases { margin-top: 6px; }
+.plan-divider { border-top: 1px solid var(--border); margin: 0 -14px; height: 0; }
+.pick-add { width: 40px; height: 40px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex: none; }
 
 .plan-name-input { font-size: 17px; font-weight: 650; }
 
@@ -254,11 +260,21 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .ub-text { display: flex; flex-direction: column; line-height: 1.25; }
 .ub-text small { font-weight: 500; font-size: 12px; opacity: .92; }
 
+.backup-hint { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: #fdf0db; color: #b45309; border: 1px solid #f3dca6; border-radius: var(--radius-sm); padding: 11px 14px; font-size: 14px; font-weight: 600; }
 .dur-row { display: flex; align-items: center; gap: 8px; }
 .dur-row .input { flex: 1; min-width: 0; text-align: center; }
 .dur-unit { font-size: 15px; color: var(--muted); font-weight: 600; }
 
-.added-toast { position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%); background: var(--text); color: #fff; padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; z-index: 60; box-shadow: 0 4px 16px rgba(0, 0, 0, .18); }
+/* Master für alle Notifications: nutzt die Breite, leicht abgerundet, schwarz/weiß. */
+.added-toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
+  width: calc(100% - 24px); max-width: var(--maxw);
+  background: #16181d; color: #fff; text-align: center;
+  padding: 13px 16px; border-radius: 12px;
+  font-size: 14px; font-weight: 600;
+  z-index: 60; box-shadow: 0 6px 20px rgba(0, 0, 0, .22);
+}
 
 /* ---- Workout ---- */
 .work-count { font-size: 15px; font-weight: 700; color: var(--muted); }
@@ -294,15 +310,15 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .step-btn:active { background: var(--surface-2); }
 .stepper-value { font-size: 24px; font-weight: 750; min-width: 64px; text-align: center; }
 .big-btn { padding: 16px; font-size: 17px; margin-top: 4px; }
-.work-extra-actions { display: flex; gap: 20px; justify-content: center; margin-top: 4px; }
-.work-extra-actions button { background: none; border: none; font-size: 15px; font-weight: 600; color: var(--muted); padding: 6px 4px; }
+.work-btn-row { display: flex; gap: 10px; width: 100%; }
+.work-btn-row .btn { flex: 1; }
 .timer { font-size: 72px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .timer.ending { color: var(--accent); }
 .half-hint { background: #fdf0db; color: #b45309; font-size: 15px; font-weight: 700; padding: 10px 20px; border-radius: var(--radius-sm); text-align: center; }
-.timer-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .rest-title { font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-.rest-next { font-size: 15px; color: var(--muted); text-align: center; }
-.rest-next b { color: var(--text); }
+.rest-next { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.rest-next-label { font-size: 15px; color: var(--muted); }
+.rest-next-name { font-size: 20px; font-weight: 700; color: var(--text); }
 .summary-hero { text-align: center; padding: 12px 0; }
 .summary-emoji { font-size: 56px; }
 .summary-plan { font-size: 18px; font-weight: 700; margin-top: 6px; }
@@ -321,10 +337,14 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .day-name { font-size: 17px; font-weight: 700; }
 .iconbtn.small { width: 32px; height: 32px; }
 .day-empty { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.day-card.rest { padding-top: 9px; padding-bottom: 9px; }
+.day-card.rest .day-empty { margin-top: 2px; }
 .day-entries { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-.week-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 7px 6px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; }
-.week-chip.strength { background: var(--accent-soft); color: var(--accent); }
-.week-chip.cycling { background: var(--accent-soft); color: var(--accent); }
+.week-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 7px 6px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.week-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.week-chip.open { background: var(--accent-soft); color: var(--accent); }
+.week-chip.done { background: #e7f7ee; color: #15803d; }
+.week-chip.missed { background: var(--danger-soft); color: var(--danger); }
 .chip-check { color: var(--success); display: inline-flex; }
 .chip-x { display: inline-flex; align-items: center; justify-content: center; border: none; background: rgba(0, 0, 0, .08); color: inherit; width: 19px; height: 19px; border-radius: 50%; padding: 0; }
 
@@ -339,6 +359,8 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 /* Muskelgruppen-Filter-Sheet: fixer Kopf + Suche, darunter scrollende Liste */
 .modal-sheet.muscle-sheet { overflow: hidden; gap: 10px; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; }
+/* Kopf der Bottom-Sheets bleibt beim Scrollen oben (Headline + Schließen-Button). */
+.modal-sheet > .sheet-head { position: sticky; top: 0; background: var(--surface); z-index: 2; padding-bottom: 6px; }
 .muscle-sheet-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
 .sheet-all { width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 15px; font-weight: 600; color: var(--text); }
 .sheet-all.active { background: var(--accent); border-color: var(--accent); color: #fff; }
@@ -350,7 +372,8 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .stats-caption { font-size: 13px; color: var(--muted); }
 .chart { display: block; overflow: visible; }
 .chart-val { font-size: 11px; fill: var(--text); font-weight: 600; }
-.chart-lbl { font-size: 10.5px; fill: var(--muted); font-weight: 600; }
+.chart-lbl { font-size: 12px; fill: var(--muted); font-weight: 600; }
+.accordion-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; background: none; border: none; padding: 0; cursor: pointer; text-align: left; color: var(--text); font: inherit; }
 .hbars { display: flex; flex-direction: column; gap: 8px; }
 .hbar-row { display: flex; align-items: center; gap: 9px; }
 .hbar-label { font-size: 13px; width: 104px; flex: none; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -452,9 +475,8 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 /* Wochen-Wechsler (Woche-Tab) */
 .week-switch { display: flex; align-items: center; gap: 10px; }
 .week-switch-center { flex: 1; text-align: center; min-width: 0; }
-.week-kwline { display: flex; align-items: center; justify-content: center; gap: 7px; }
-.week-kw { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-.week-now { background: transparent; color: var(--accent); border: 1px solid #9cbcf2; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; line-height: 1.5; }
+.week-kw-pill { display: inline-block; font-size: 13px; font-weight: 700; padding: 3px 12px; border-radius: 999px; border: 1.5px solid var(--border); color: var(--muted); }
+.week-kw-pill.now { border-color: var(--accent); color: var(--accent); }
 .week-range { font-size: 17px; font-weight: 700; color: var(--text); margin-top: 1px; }
 
 /* ---- Süßigkeiten-Tracking ---- */

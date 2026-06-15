@@ -70,7 +70,7 @@ export function CyclingStats({ rides, bodyWeights }) {
     <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
 
     ${data.length === 0 ? html`<div class="empty"><p>Keine Fahrten dieser Art im Zeitraum.</p></div>` : html`
-      <div class="stats-section"><h3>Fahrten pro ${NOUN[period]}</h3><${BarChart} data=${series(() => 1, 'count')} /></div>
+      <div class="stats-section"><h3>Radtraining pro ${NOUN[period]}</h3><${BarChart} data=${series(() => 1, 'count')} /></div>
       <div class="stats-section"><h3>Kilometer pro ${NOUN[period]}</h3><${BarChart} data=${series((r) => r.distanceKm, 'sum')} /></div>
       <div class="stats-section"><h3>Höhenmeter pro ${NOUN[period]}</h3><${BarChart} data=${series((r) => r.elevationM, 'sum')} /></div>
       ${hasWatt ? html`<div class="stats-section">

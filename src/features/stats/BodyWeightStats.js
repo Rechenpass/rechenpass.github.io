@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { LineChart } from './Charts.js';
 import { addBodyWeight, deleteBodyWeight } from '../../store.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 import { todayInput, parseDateInput, formatDate } from '../../dateUtils.js';
 
 function shortDate(ts) {
@@ -13,6 +14,7 @@ function shortDate(ts) {
 export function BodyWeightStats({ bodyWeights }) {
   const [date, setDate] = useState(todayInput());
   const [kg, setKg] = useState('');
+  const [showEntries, setShowEntries] = useState(false);
 
   const entries = [...bodyWeights].sort((a, b) => a.date - b.date);
   const latest = entries.length ? entries[entries.length - 1] : null;
@@ -43,17 +45,20 @@ export function BodyWeightStats({ bodyWeights }) {
           <${LineChart} data=${lineData} unit=${' kg'} />
         </div>
         <div class="stats-section">
-          <h3>Einträge</h3>
-          <div class="weight-list">
+          <button class="accordion-head" onClick=${() => setShowEntries((s) => !s)}>
+            <h3>Einträge <span class="muted">(${entries.length})</span></h3>
+            <${Icon} name=${showEntries ? 'up' : 'down'} size=${18} />
+          </button>
+          ${showEntries ? html`<div class="weight-list">
             ${[...entries].reverse().map((e) => html`
               <div class="weight-row" key=${e.id}>
                 <span>${formatDate(e.date)}</span>
                 <span class="weight-val">${e.weightKg} kg</span>
-                <button class="iconbtn small" onClick=${() => { if (confirm('Eintrag löschen?')) deleteBodyWeight(e.id); }} aria-label="löschen">
+                <button class="iconbtn small" onClick=${() => confirmAsk({ title: 'Eintrag löschen?', confirmLabel: 'Löschen', onConfirm: () => deleteBodyWeight(e.id) })} aria-label="löschen">
                   <${Icon} name="trash" size=${16} />
                 </button>
               </div>`)}
-          </div>
+          </div>` : null}
         </div>`}
   </div>`;
 }

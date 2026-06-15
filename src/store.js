@@ -335,3 +335,12 @@ export function replaceAllData(obj) {
   state = normalize(obj && typeof obj === 'object' ? obj : {});
   persist();
 }
+
+// Backup-Erinnerung: Zeitpunkt des letzten Exports/Imports merken (separat, nicht im Backup selbst).
+export function markBackupDone() {
+  try { localStorage.setItem('_lastBackup', String(Date.now())); } catch (e) { /* egal */ }
+}
+export function lastBackupTs() {
+  const v = localStorage.getItem('_lastBackup');
+  return v ? Number(v) : null;
+}

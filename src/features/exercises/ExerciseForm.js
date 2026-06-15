@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { Segmented } from '../../components/Segmented.js';
 import { MuscleSelect } from './MuscleSelect.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 import { AutoTextarea } from '../../components/AutoTextarea.js';
 import { GROUPS, PHASES, REGIONS, SETS_OPTIONS, REPS_OPTIONS, DURATION_OPTIONS } from '../../constants.js';
 import { addExercise, updateExercise, deleteExercise } from '../../store.js';
@@ -46,12 +47,10 @@ export function ExerciseForm({ initial, onClose, onSaved }) {
     onClose();
   };
 
-  const remove = () => {
-    if (confirm('Diese Übung wirklich löschen?')) {
-      deleteExercise(initial.id);
-      onClose();
-    }
-  };
+  const remove = () => confirmAsk({
+    title: 'Übung löschen?', message: 'Diese Übung wirklich löschen?', confirmLabel: 'Löschen',
+    onConfirm: () => { deleteExercise(initial.id); onClose(); },
+  });
 
   return html`<div class="screen">
     <header class="screen-header">

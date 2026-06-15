@@ -1,4 +1,5 @@
 import { html } from '../../html.js';
+import { confirmAsk } from '../../components/confirmHost.js';
 import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { PlanItemCard } from './PlanItemCard.js';
@@ -36,12 +37,10 @@ export function PlanEditor({ initial, onClose }) {
     onClose();
   };
 
-  const remove = () => {
-    if (confirm('Diesen Plan wirklich löschen?')) {
-      deletePlan(initial.id);
-      onClose();
-    }
-  };
+  const remove = () => confirmAsk({
+    title: 'Plan löschen?', message: 'Diesen Trainingsplan wirklich löschen?', confirmLabel: 'Löschen',
+    onConfirm: () => { deletePlan(initial.id); onClose(); },
+  });
 
   if (picking) {
     return html`<${ExercisePicker} onAdd=${addExercise} addedCount=${items.length} onClose=${() => setPicking(false)} />`;

@@ -1,7 +1,8 @@
 import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
-import { getState, replaceAllData } from '../../store.js';
+import { confirmAsk } from '../../components/confirmHost.js';
+import { getState, replaceAllData, markBackupDone } from '../../store.js';
 import { isoDate } from '../../dateUtils.js';
 
 export function SettingsPage({ onClose }) {
@@ -20,6 +21,7 @@ export function SettingsPage({ onClose }) {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1500);
+      markBackupDone();
       setMsg({ type: 'ok', text: 'Backup-Datei wurde erstellt (Download / „Datei sichern").' });
     } catch (e) {
       setMsg({ type: 'err', text: 'Export fehlgeschlagen.' });
@@ -43,10 +45,11 @@ export function SettingsPage({ onClose }) {
         setMsg({ type: 'err', text: 'Das sieht nicht nach einer Fitness-Backup-Datei aus.' });
         return;
       }
-      if (confirm('Backup importieren? Deine aktuellen Daten werden dabei vollständig ersetzt.')) {
-        replaceAllData(parsed);
-        setMsg({ type: 'ok', text: 'Backup importiert – deine Daten wurden ersetzt.' });
-      }
+      confirmAsk({
+        title: 'Backup importieren?', message: 'Deine aktuellen Daten werden dabei vollständig ersetzt.',
+        confirmLabel: 'Importieren & ersetzen', icon: 'upload',
+        onConfirm: () => { replaceAllData(parsed); markBackupDone(); setMsg({ type: 'ok', text: 'Backup importiert – deine Daten wurden ersetzt.' }); },
+      });
     };
     reader.readAsText(file);
   };
