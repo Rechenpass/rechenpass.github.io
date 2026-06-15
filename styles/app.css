@@ -319,6 +319,26 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .rest-next { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .rest-next-label { font-size: 15px; color: var(--muted); }
 .rest-next-name { font-size: 20px; font-weight: 700; color: var(--text); }
+
+/* Farbmodus: nur Countdown & Pause werden vollflächig blau (weiße Schrift, Glas-Buttons).
+   Die Übungs-Bildschirme (Warm-Up/Training/Cool-Down, Zeit- und Wdh.-Übungen) bleiben unverändert hell.
+   Bewusst KEINE Farbänderung der Zahl in den letzten 5 Sek. (sonst Blau auf Blau) – nur die Töne
+   signalisieren das Ende; deshalb bleibt .timer.ending hier weiß. */
+.screen.workout.timer-blue { background: var(--accent); color: #fff; }
+.timer-blue .screen-header { background: transparent; border-bottom-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.timer-blue .screen-header h2 { color: #fff; }
+.timer-blue .iconbtn { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .5); color: #fff; }
+.timer-blue .work-time, .timer-blue .work-time .icon { color: rgba(255, 255, 255, .85); }
+.timer-blue .phase-pill { background: rgba(255, 255, 255, .2); color: #fff; }
+.timer-blue .progress-bar .pb-seg { background: rgba(255, 255, 255, .3); }
+.timer-blue .progress-bar .pb-seg-fill { background: #fff; }
+.timer-blue .timer, .timer-blue .timer.ending { color: #fff; }
+.timer-blue .rest-title { color: rgba(255, 255, 255, .85); }
+.timer-blue .rest-next-label { color: rgba(255, 255, 255, .8); }
+.timer-blue .rest-next-name { color: #fff; }
+.timer-blue .big-label { color: rgba(255, 255, 255, .9); }
+.timer-blue .btn { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .5); color: #fff; }
+.timer-blue .btn:active { background: rgba(255, 255, 255, .28); }
 .summary-hero { text-align: center; padding: 12px 0; }
 .summary-emoji { font-size: 56px; }
 .summary-plan { font-size: 18px; font-weight: 700; margin-top: 6px; }

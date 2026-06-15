@@ -104,7 +104,7 @@ export function RestStep({ step, onNext }) {
 export function PrepCountdown({ planName, onDone, onSkip, onQuit }) {
   const { remaining } = useCountdown(10, onDone);
   useEffect(() => { if (remaining > 0 && remaining <= 5) beep(600, 70); }, [remaining]);
-  return html`<div class="screen workout">
+  return html`<div class="screen workout timer-blue">
     <header class="screen-header">
       <button class="iconbtn" onClick=${onQuit} aria-label="Abbrechen"><${Icon} name="x" /></button>
       <h2>${planName}</h2>

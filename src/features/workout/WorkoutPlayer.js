@@ -136,7 +136,7 @@ export function WorkoutPlayer({ plan, date, onExit }) {
     title: 'Workout abbrechen?', message: 'Der Fortschritt wird nicht gespeichert.', confirmLabel: 'Verwerfen', onConfirm: onExit,
   });
 
-  return html`<div class="screen workout">
+  return html`<div class=${'screen workout' + (step.kind === 'rest' ? ' timer-blue' : '')}>
     <header class="screen-header">
       <button class="iconbtn" onClick=${quit} aria-label="Abbrechen"><${Icon} name="x" /></button>
       <h2>${plan.name}</h2>
