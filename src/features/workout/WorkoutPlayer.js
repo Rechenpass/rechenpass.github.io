@@ -2,12 +2,12 @@ import { html } from '../../html.js';
 import { useState, useMemo, useRef, useEffect } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { phaseLabel } from '../../constants.js';
-import { saveSession } from '../../store.js';
+import { saveSession, getPrefs } from '../../store.js';
 import { buildSteps, totalSets, formatClock } from './workoutEngine.js';
 import { RepsWorkStep, TimeWorkStep, RestStep, PrepCountdown } from './WorkoutSteps.js';
 import { WorkoutSummary } from './WorkoutSummary.js';
 import { WorkoutReview } from './WorkoutReview.js';
-import { beep } from './workoutRuntime.js';
+import { beep, releaseAudio } from './workoutRuntime.js';
 import { confirmAsk } from '../../components/confirmHost.js';
 
 function phaseClass(phase) {
@@ -24,7 +24,8 @@ export function WorkoutPlayer({ plan, date, onExit }) {
   const [reviewEntries, setReviewEntries] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [descOpen, setDescOpen] = useState(false); // Beschreibung wird nur auf Tipp als Sheet gezeigt
-  const [prep, setPrep] = useState(true); // #29: 10-Sek-Countdown vor dem Start
+  const prefsRef = useRef(getPrefs()); // Einstellungen einmalig beim Start lesen (Töne/Countdown/Wachhalten)
+  const [prep, setPrep] = useState(prefsRef.current.prepSec > 0); // #29: Vor-Countdown (Länge aus Einstellungen; 0 = aus)
   const [toast, setToast] = useState(null); // kurzes Feedback (z. B. Extra-Satz)
   // Gesamtzeit läuft sekündlich mit (Wanduhr ab Start – passt zur gespeicherten durationSec).
   useEffect(() => {
@@ -32,8 +33,9 @@ export function WorkoutPlayer({ plan, date, onExit }) {
     return () => clearInterval(id);
   }, []);
 
-  // #34: Bildschirm während des Trainings wach halten (Wake Lock; bei iOS ab 16.4).
+  // #34: Bildschirm während des Trainings wach halten (Wake Lock; bei iOS ab 16.4) – abschaltbar in den Einstellungen.
   useEffect(() => {
+    if (!prefsRef.current.wakeLock) return undefined;
     let lock = null;
     let released = false;
     const acquire = async () => {
@@ -53,6 +55,9 @@ export function WorkoutPlayer({ plan, date, onExit }) {
   useEffect(() => {
     if (!prep) beep(1046, 110);
   }, [i, prep]);
+
+  // Audio-Sitzung beim Verlassen des Trainings freigeben (Wachhalter stoppen, Listener lösen).
+  useEffect(() => () => releaseAudio(), []);
 
   const confirmSave = (editedEntries) => {
     const session = {
@@ -86,7 +91,7 @@ export function WorkoutPlayer({ plan, date, onExit }) {
   }
 
   if (prep) {
-    return html`<${PrepCountdown} planName=${plan.name}
+    return html`<${PrepCountdown} planName=${plan.name} seconds=${prefsRef.current.prepSec}
       onDone=${() => setPrep(false)} onSkip=${() => setPrep(false)}
       onQuit=${() => confirmAsk({ title: 'Workout abbrechen?', message: 'Der Fortschritt wird nicht gespeichert.', confirmLabel: 'Verwerfen', onConfirm: onExit })} />`;
   }

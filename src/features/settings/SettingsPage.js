@@ -1,14 +1,42 @@
 import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
+import { Segmented } from '../../components/Segmented.js';
 import { confirmAsk } from '../../components/confirmHost.js';
-import { getState, replaceAllData, markBackupDone } from '../../store.js';
-import { isoDate } from '../../dateUtils.js';
+import { getState, replaceAllData, markBackupDone, lastBackupTs, getPrefs, setPref } from '../../store.js';
+import { isoDate, formatDate } from '../../dateUtils.js';
+
+const PREP_OPTS = [
+  { value: 0, label: 'Aus' },
+  { value: 5, label: '5s' },
+  { value: 10, label: '10s' },
+  { value: 15, label: '15s' },
+];
+
+// Kleiner Kippschalter (an/aus).
+function Toggle({ on, onChange, label }) {
+  return html`<button type="button" role="switch" aria-checked=${on} aria-label=${label}
+    class=${'toggle' + (on ? ' on' : '')} onClick=${() => onChange(!on)}>
+    <span class="toggle-knob"></span>
+  </button>`;
+}
+
+function backupInfo() {
+  const ts = lastBackupTs();
+  if (!ts) return { text: 'noch nie', amber: true };
+  const days = Math.floor((Date.now() - ts) / 86400000);
+  const rel = days <= 0 ? 'heute' : days === 1 ? 'gestern' : `vor ${days} Tagen`;
+  return { text: `${formatDate(ts)} · ${rel}`, amber: days > 30 };
+}
 
 export function SettingsPage({ onClose }) {
   const [msg, setMsg] = useState(null); // { type: 'ok' | 'err', text }
+  const [prefs, setPrefsState] = useState(getPrefs);
   const s = getState();
   const counts = `${(s.exercises || []).length} Übungen · ${(s.plans || []).length} Pläne · ${(s.sessions || []).length} Trainings · ${(s.rides || []).length} Fahrten`;
+  const version = localStorage.getItem('_mv') || '';
+  const backup = backupInfo();
+  const upd = (k, v) => setPrefsState(setPref(k, v));
 
   const exportData = () => {
     try {
@@ -57,22 +85,44 @@ export function SettingsPage({ onClose }) {
   return html`<div class="screen">
     <header class="screen-header">
       <button class="iconbtn" onClick=${onClose} aria-label="Zurück"><${Icon} name="back" /></button>
-      <h2>Daten & Backup</h2>
+      <h2>Einstellungen</h2>
     </header>
     <div class="screen-body">
-      <p class="muted">Aktuell gespeichert: ${counts}</p>
-
       ${msg ? html`<div class=${'banner ' + (msg.type === 'err' ? 'error' : 'ok')}>${msg.text}</div>` : null}
 
       <div class="stats-section">
-        <h3>Backup exportieren</h3>
-        <p class="stats-caption">Speichert alle Daten als Datei (.json) – zum Sichern oder um sie auf ein anderes Gerät (z. B. iPhone) zu übertragen.</p>
-        <button class="btn primary full" onClick=${exportData}><${Icon} name="download" size=${18} /> Backup exportieren</button>
+        <h3>Info</h3>
+        <div class="set-group">
+          <div class="set-row"><span class="set-row-label">Version</span><span class="set-row-value">${version || '—'}</span></div>
+          <div class="set-row"><span class="set-row-label">Letztes Backup</span><span class=${'set-row-value' + (backup.amber ? ' amber' : '')}>${backup.text}</span></div>
+          <div class="set-row col"><span class="set-row-label">Gespeichert</span><span class="set-row-value left">${counts}</span></div>
+        </div>
       </div>
 
       <div class="stats-section">
-        <h3>Backup importieren</h3>
-        <p class="stats-caption"><b>Achtung:</b> ersetzt deine aktuellen Daten durch den Inhalt der Datei.</p>
+        <h3>Training</h3>
+        <div class="set-group">
+          <div class="set-row">
+            <span class="set-row-label">Töne</span>
+            <${Toggle} on=${prefs.sound} onChange=${(v) => upd('sound', v)} label="Töne" />
+          </div>
+          <div class="set-row col">
+            <span class="set-row-label">Vorbereitung-Countdown</span>
+            <${Segmented} options=${PREP_OPTS} value=${prefs.prepSec} onChange=${(v) => upd('prepSec', v)} />
+          </div>
+          <div class="set-row">
+            <span class="set-row-label">Bildschirm wachhalten</span>
+            <${Toggle} on=${prefs.wakeLock} onChange=${(v) => upd('wakeLock', v)} label="Bildschirm wachhalten" />
+          </div>
+        </div>
+        <p class="stats-caption">Töne aus = keine Signaltöne. „Vorbereitung-Countdown" ist der Countdown vor dem Start (Aus = sofort los).</p>
+      </div>
+
+      <div class="stats-section">
+        <h3>Daten & Backup</h3>
+        <p class="stats-caption">Speichert alle Daten als Datei (.json) – zum Sichern oder um sie auf ein anderes Gerät (z. B. iPhone) zu übertragen.</p>
+        <button class="btn primary full" onClick=${exportData}><${Icon} name="download" size=${18} /> Backup exportieren</button>
+        <p class="stats-caption" style="margin-top:10px"><b>Achtung:</b> Importieren ersetzt deine aktuellen Daten durch den Inhalt der Datei.</p>
         <label class="btn full import-btn">
           <${Icon} name="upload" size=${18} /> Backup-Datei wählen …
           <input type="file" accept="application/json,.json" onChange=${onFile} hidden />

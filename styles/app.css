@@ -312,9 +312,24 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .big-btn { padding: 16px; font-size: 17px; margin-top: 4px; }
 .work-btn-row { display: flex; gap: 10px; width: 100%; }
 .work-btn-row .btn { flex: 1; }
-.timer { font-size: 72px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.timer.ending { color: var(--accent); }
+.timer-ring { display: block; margin: 2px auto; }
+.timer-ring-arc { transition: stroke-dashoffset .3s linear, stroke .3s ease; }
+.timer-ring-text { fill: var(--text); font-size: 30px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .half-hint { background: #fdf0db; color: #b45309; font-size: 15px; font-weight: 700; padding: 10px 20px; border-radius: var(--radius-sm); text-align: center; }
+
+/* Einstellungen: gruppierte Zeilen + Kippschalter */
+.set-group { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+.set-row + .set-row { border-top: 1px solid var(--surface-2); }
+.set-row.col { flex-direction: column; align-items: stretch; gap: 10px; }
+.set-row-label { font-size: 15px; }
+.set-row-value { font-size: 15px; color: var(--muted); text-align: right; }
+.set-row-value.left { text-align: left; }
+.set-row-value.amber { color: #b45309; font-weight: 600; }
+.toggle { width: 46px; height: 28px; border-radius: 14px; background: #d1d5db; border: none; padding: 0; position: relative; flex: none; cursor: pointer; transition: background .15s ease; }
+.toggle.on { background: var(--accent); }
+.toggle-knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(16, 24, 40, .2); transition: left .15s ease; }
+.toggle.on .toggle-knob { left: 21px; }
 .rest-title { font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .rest-next { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
 .rest-next-label { font-size: 15px; color: var(--muted); }
@@ -323,7 +338,7 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 /* Farbmodus: nur Countdown & Pause werden vollflächig blau (weiße Schrift, Glas-Buttons).
    Die Übungs-Bildschirme (Warm-Up/Training/Cool-Down, Zeit- und Wdh.-Übungen) bleiben unverändert hell.
    Bewusst KEINE Farbänderung der Zahl in den letzten 5 Sek. (sonst Blau auf Blau) – nur die Töne
-   signalisieren das Ende; deshalb bleibt .timer.ending hier weiß. */
+   signalisieren das Ende; der rote Endspurt der letzten Sekunden liegt im Fortschrittsring (.timer-ring-arc), nicht in der Zahl. */
 .screen.workout.timer-blue { background: var(--accent); color: #fff; }
 .timer-blue .screen-header { background: transparent; border-bottom-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
 .timer-blue .screen-header h2 { color: #fff; }
@@ -332,7 +347,7 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .timer-blue .phase-pill { background: rgba(255, 255, 255, .2); color: #fff; }
 .timer-blue .progress-bar .pb-seg { background: rgba(255, 255, 255, .3); }
 .timer-blue .progress-bar .pb-seg-fill { background: #fff; }
-.timer-blue .timer, .timer-blue .timer.ending { color: #fff; }
+.timer-blue .timer-ring-text { fill: #fff; }
 .timer-blue .rest-title { color: rgba(255, 255, 255, .85); }
 .timer-blue .rest-next-label { color: rgba(255, 255, 255, .8); }
 .timer-blue .rest-next-name { color: #fff; }

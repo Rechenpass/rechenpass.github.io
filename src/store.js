@@ -344,3 +344,20 @@ export function lastBackupTs() {
   const v = localStorage.getItem('_lastBackup');
   return v ? Number(v) : null;
 }
+
+// ---- Einstellungen (gerätelokal, getrennt von den Trainingsdaten / nicht im Backup) ----
+const PREFS_KEY = 'fitnessPrefs';
+const DEFAULT_PREFS = { sound: true, prepSec: 10, wakeLock: true };
+export function getPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : { ...DEFAULT_PREFS };
+  } catch (e) {
+    return { ...DEFAULT_PREFS };
+  }
+}
+export function setPref(key, value) {
+  const next = { ...getPrefs(), [key]: value };
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch (e) { /* egal */ }
+  return next;
+}

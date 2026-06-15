@@ -12,11 +12,11 @@ import { ManagePage } from './features/manage/ManagePage.js';
 import { WorkoutPlayer } from './features/workout/WorkoutPlayer.js';
 import { RideForm } from './features/cycling/RideForm.js';
 import { WorkoutReview } from './features/workout/WorkoutReview.js';
-import { updateSession } from './store.js';
+import { updateSession, getPrefs } from './store.js';
 import { isoDate } from './dateUtils.js';
-import { unlockAudio } from './features/workout/workoutRuntime.js';
+import { unlockAudio, setSoundEnabled } from './features/workout/workoutRuntime.js';
 
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v11';
 
 function App() {
   const [tab, setTab] = useState('heute');
@@ -51,7 +51,7 @@ function App() {
 
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
-  const startWorkout = (plan, date) => { unlockAudio(); setPendingDate(date ?? null); setActivePlan(plan); };
+  const startWorkout = (plan, date) => { const p = getPrefs(); setSoundEnabled(p.sound); if (p.sound) unlockAudio(); setPendingDate(date ?? null); setActivePlan(plan); };
   const logRideFromHome = (date) => { setPendingDate(date ?? null); setRideForm('new'); };
 
   // Vollbild-Abläufe liegen „über" den Tabs (ohne untere Leiste – Fokus, eigener Zurück/Abbrechen-Button)

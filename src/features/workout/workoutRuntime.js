@@ -45,19 +45,73 @@ export function useCountdown(seconds, onDone) {
   };
 }
 
-// Kurzer Signalton (Web Audio). Muss durch eine Nutzer-Geste „entsperrt“ werden.
+// ---- Signaltöne (Web Audio) ----
+// iOS-Härtung gegen Aussetzer: Spielt eine andere App/Benachrichtigung (z. B. WhatsApp)
+// einen Ton, unterbricht iOS die Audio-Sitzung (Zustand 'suspended' ODER 'interrupted')
+// und unsere Timer-Töne (Pause-Ticks, Halbzeit) fallen still aus. Gegenmaßnahmen:
+//  1) Ein leiser Dauer-Ton hält die Sitzung über das ganze Training wach.
+//  2) Bei jeder Zustandsänderung / Rückkehr in den Vordergrund wird sie wieder aufgeweckt.
+//  3) beep() spielt den Ton erst, wenn die Sitzung wirklich wach ist (resume() wirkt verzögert).
 let audioCtx;
+let keepAlive;            // leiser Dauer-Ton (BufferSource), hält die iOS-Audio-Sitzung wach
+let listenersAttached = false;
+let soundOn = true;        // Signaltöne an/aus (aus den Einstellungen, beim Trainingsstart gesetzt)
+
+// Töne global an-/abschalten.
+export function setSoundEnabled(on) { soundOn = !!on; }
+
+function startKeepAlive() {
+  try {
+    if (!audioCtx || keepAlive) return;
+    const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate); // 1 Sample Stille
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    src.connect(audioCtx.destination);
+    src.start(0);
+    keepAlive = src;
+  } catch (e) { /* egal */ }
+}
+
+function wake() {
+  try {
+    if (audioCtx && audioCtx.state !== 'running') {
+      const p = audioCtx.resume();
+      if (p && p.catch) p.catch(() => {});
+    }
+    startKeepAlive();
+  } catch (e) { /* egal */ }
+}
+
+function onVisible() { if (document.visibilityState === 'visible') wake(); }
+function onStateChange() { wake(); }
+
+// Durch eine Nutzer-Geste aufrufen (Trainingsstart): entsperrt Audio + startet den Wachhalter.
 export function unlockAudio() {
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!listenersAttached) {
+      document.addEventListener('visibilitychange', onVisible);
+      if (audioCtx.addEventListener) audioCtx.addEventListener('statechange', onStateChange);
+      listenersAttached = true;
+    }
+    wake();
   } catch (e) { /* kein Audio verfügbar – egal */ }
 }
 
-export function beep(freq = 880, ms = 160) {
+// Beim Verlassen des Trainings aufrufen: Dauer-Ton stoppen, Listener lösen (Akku schonen).
+export function releaseAudio() {
+  try { if (keepAlive) keepAlive.stop(); } catch (e) { /* egal */ }
+  keepAlive = null;
   try {
-    if (!audioCtx) return;
-    if (audioCtx.state === 'suspended') audioCtx.resume(); // iOS: Context kann zwischendurch einschlafen
+    document.removeEventListener('visibilitychange', onVisible);
+    if (audioCtx && audioCtx.removeEventListener) audioCtx.removeEventListener('statechange', onStateChange);
+  } catch (e) { /* egal */ }
+  listenersAttached = false;
+}
+
+function playTone(freq, ms) {
+  try {
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'sine';
@@ -70,6 +124,18 @@ export function beep(freq = 880, ms = 160) {
     g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
     o.start(t);
     o.stop(t + ms / 1000);
+  } catch (e) { /* egal */ }
+}
+
+export function beep(freq = 880, ms = 160) {
+  if (!audioCtx || !soundOn) return;
+  if (audioCtx.state === 'running') { playTone(freq, ms); return; }
+  // Sitzung schläft (z. B. nach einer Benachrichtigung) → aufwecken, dann spielen.
+  try {
+    const p = audioCtx.resume();
+    if (p && p.then) p.then(() => playTone(freq, ms)).catch(() => {});
+    else playTone(freq, ms);
+    startKeepAlive();
   } catch (e) { /* egal */ }
 }
 
