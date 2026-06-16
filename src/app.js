@@ -16,7 +16,7 @@ import { updateSession, getPrefs } from './store.js';
 import { isoDate } from './dateUtils.js';
 import { unlockAudio, setSoundEnabled } from './features/workout/workoutRuntime.js';
 
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 
 function App() {
   const [tab, setTab] = useState('heute');

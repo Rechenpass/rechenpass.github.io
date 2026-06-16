@@ -4,12 +4,9 @@ import { Icon } from '../../components/Icon.js';
 import { useCountdown, beep, vibrate } from './workoutRuntime.js';
 import { formatClock } from './workoutEngine.js';
 
-const PHASE_COLOR = { WarmUp: '#b45309', Training: '#2563eb', CoolDown: '#0f766e' };
-const RING_RED = '#ef4444';
-
-// Kreisförmiger Countdown-Ring um die Timer-Zahl: leert sich im Takt der Sekunden.
-// Die Farbe gibt der Aufrufer vor – Phasenfarbe auf den hellen Zeit-Übungs-Screens, Weiß auf den
-// blauen Pause-/Countdown-Screens; in den letzten 5 Sek. Rot. Die Zahl in der Mitte bleibt ruhig.
+// Kreisförmiger Fortschrittsring um die Timer-Zahl: füllt sich im Uhrzeigersinn mit zunehmender Zeit
+// (voll am Ende des Abschnitts). Farbe gibt der Aufrufer vor – Blau bei Zeit-Übungen, Weiß bei
+// Pause/Countdown; keine Farbänderung am Ende. Die Zahl in der Mitte bleibt ruhig.
 function TimerRing({ frac, label, color, track }) {
   const R = 52;
   const C = 2 * Math.PI * R;
@@ -58,7 +55,7 @@ export function RepsWorkStep({ step, onNext, onSkip, onAddSet }) {
   </div>`;
 }
 
-// Zeit-Übung: Countdown im Ring (Phasenfarbe, letzte 5 Sek. rot), am Ende automatisch weiter.
+// Zeit-Übung: Ring füllt sich (blau), am Ende automatisch weiter.
 export function TimeWorkStep({ step, onNext, onSkip }) {
   const finish = () => { beep(); vibrate(200); onNext({ durationSec: step.targetDurationSec }); };
   const { remaining, running, pause, resume } = useCountdown(step.targetDurationSec || 0, finish);
@@ -84,10 +81,10 @@ export function TimeWorkStep({ step, onNext, onSkip }) {
     if (remaining > 0 && remaining <= 5) beep(600, 70);
   }, [remaining]);
 
-  const ending = remaining <= 5;
+  const total = step.targetDurationSec || 1;
   return html`<div class="work-body">
-    <${TimerRing} frac=${remaining / (step.targetDurationSec || 1)} label=${formatClock(remaining)}
-      color=${ending ? RING_RED : (PHASE_COLOR[step.phase] || '#2563eb')} track="#e5e7eb" />
+    <${TimerRing} frac=${(total - remaining) / total} label=${formatClock(remaining)}
+      color="#2563eb" track="#e5e7eb" />
     ${sideHint ? html`<div class="half-hint">↔ Seite / Richtung wechseln</div>` : null}
     ${step.extra ? html`<div class="big-label">Extra-Satz</div>` : (step.setCount > 1 ? html`<div class="big-label">Satz ${step.setIndex}/${step.setCount}</div>` : null)}
     <div class="work-btn-row">
@@ -99,16 +96,16 @@ export function TimeWorkStep({ step, onNext, onSkip }) {
   </div>`;
 }
 
-// Pause: Countdown im Ring (weiß auf Blau, letzte 5 Sek. rot), zeigt was als Nächstes kommt.
+// Pause: Ring füllt sich (weiß auf Blau), zeigt was als Nächstes kommt.
 export function RestStep({ step, onNext }) {
   const done = () => { beep(660); vibrate(150); onNext(null); };
   const { remaining, running, pause, resume } = useCountdown(step.restSec || 0, done);
   useEffect(() => { if (remaining > 0 && remaining <= 5) beep(600, 70); }, [remaining]);
-  const ending = remaining <= 5;
+  const total = step.restSec || 1;
   return html`<div class="work-body">
     <div class="rest-title">Pause</div>
-    <${TimerRing} frac=${remaining / (step.restSec || 1)} label=${formatClock(remaining)}
-      color=${ending ? RING_RED : '#ffffff'} track="rgba(255,255,255,.28)" />
+    <${TimerRing} frac=${(total - remaining) / total} label=${formatClock(remaining)}
+      color="#ffffff" track="rgba(255,255,255,.28)" />
     <div class="rest-next">
       <span class="rest-next-label">${step.nextLabel}</span>
       <span class="rest-next-name">${step.nextName}</span>
@@ -122,11 +119,11 @@ export function RestStep({ step, onNext }) {
   </div>`;
 }
 
-// #29: 10-Sekunden-Countdown vor dem Start, bevor die erste (Warm-Up-)Übung läuft.
+// #29: Vor-Countdown vor dem Start (Länge aus den Einstellungen), bevor die erste Übung läuft.
 export function PrepCountdown({ planName, seconds = 10, onDone, onSkip, onQuit }) {
   const { remaining } = useCountdown(seconds, onDone);
   useEffect(() => { if (remaining > 0 && remaining <= 5) beep(600, 70); }, [remaining]);
-  const ending = remaining <= 5;
+  const total = seconds || 1;
   return html`<div class="screen workout timer-blue">
     <header class="screen-header">
       <button class="iconbtn" onClick=${onQuit} aria-label="Abbrechen"><${Icon} name="x" /></button>
@@ -135,8 +132,8 @@ export function PrepCountdown({ planName, seconds = 10, onDone, onSkip, onQuit }
     <div class="screen-body workout-body">
       <div class="work-body">
         <div class="rest-title">Gleich geht's los</div>
-        <${TimerRing} frac=${remaining / (seconds || 1)} label=${remaining}
-          color=${ending ? RING_RED : '#ffffff'} track="rgba(255,255,255,.28)" />
+        <${TimerRing} frac=${(total - remaining) / total} label=${remaining}
+          color="#ffffff" track="rgba(255,255,255,.28)" />
         <div class="big-label">Mach dich bereit …</div>
         <button class="btn" onClick=${onSkip}>Überspringen</button>
       </div>
