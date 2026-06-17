@@ -33,6 +33,8 @@ const INNER = {
   info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 7 7 7"/>',
+  // Lotusblüte (5 Blätter, Outline) – Stil wie dumbbell/bike.
+  yoga: '<path d="M12 17 C10.2 13 10.2 8 12 4 C13.8 8 13.8 13 12 17 Z"/><path d="M12 17 C12.2 13 13.8 9.5 15.8 6.8 C17 9.5 16.2 13.5 12 17 Z"/><path d="M12 17 C11.8 13 10.2 9.5 8.2 6.8 C7 9.5 7.8 13.5 12 17 Z"/><path d="M12 17 C13.5 14 16.5 12 19.5 10.5 C19.8 13.5 17 15.8 12 17 Z"/><path d="M12 17 C10.5 14 7.5 12 4.5 10.5 C4.2 13.5 7 15.8 12 17 Z"/>',
 };
 
 export function Icon({ name, size = 22, stroke = 2 }) {

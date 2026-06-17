@@ -25,8 +25,7 @@ function backupInfo() {
   const ts = lastBackupTs();
   if (!ts) return { text: 'noch nie', amber: true };
   const days = Math.floor((Date.now() - ts) / 86400000);
-  const rel = days <= 0 ? 'heute' : days === 1 ? 'gestern' : `vor ${days} Tagen`;
-  return { text: `${formatDate(ts)} · ${rel}`, amber: days > 30 };
+  return { text: formatDate(ts), amber: days > 30 };
 }
 
 export function SettingsPage({ onClose }) {
@@ -35,6 +34,8 @@ export function SettingsPage({ onClose }) {
   const s = getState();
   const counts = `${(s.exercises || []).length} Übungen · ${(s.plans || []).length} Pläne · ${(s.sessions || []).length} Trainings · ${(s.rides || []).length} Fahrten`;
   const version = localStorage.getItem('_mv') || '';
+  const versionDateTs = Number(localStorage.getItem('_mvDate')) || null;
+  const versionText = version ? version + (versionDateTs ? ' (' + formatDate(versionDateTs) + ')' : '') : '—';
   const backup = backupInfo();
   const upd = (k, v) => setPrefsState(setPref(k, v));
 
@@ -93,7 +94,7 @@ export function SettingsPage({ onClose }) {
       <div class="stats-section">
         <h3>Info</h3>
         <div class="set-group">
-          <div class="set-row"><span class="set-row-label">Version</span><span class="set-row-value">${version || '—'}</span></div>
+          <div class="set-row"><span class="set-row-label">Version</span><span class="set-row-value">${versionText}</span></div>
           <div class="set-row"><span class="set-row-label">Letztes Backup</span><span class=${'set-row-value' + (backup.amber ? ' amber' : '')}>${backup.text}</span></div>
           <div class="set-row col"><span class="set-row-label">Gespeichert</span><span class="set-row-value left">${counts}</span></div>
         </div>
@@ -103,8 +104,8 @@ export function SettingsPage({ onClose }) {
         <h3>Training</h3>
         <div class="set-group">
           <div class="set-row">
-            <span class="set-row-label">Töne</span>
-            <${Toggle} on=${prefs.sound} onChange=${(v) => upd('sound', v)} label="Töne" />
+            <span class="set-row-label">Signaltöne</span>
+            <${Toggle} on=${prefs.sound} onChange=${(v) => upd('sound', v)} label="Signaltöne" />
           </div>
           <div class="set-row col">
             <span class="set-row-label">Vorbereitung-Countdown</span>
@@ -115,7 +116,6 @@ export function SettingsPage({ onClose }) {
             <${Toggle} on=${prefs.wakeLock} onChange=${(v) => upd('wakeLock', v)} label="Bildschirm wachhalten" />
           </div>
         </div>
-        <p class="stats-caption">Töne aus = keine Signaltöne. „Vorbereitung-Countdown" ist der Countdown vor dem Start (Aus = sofort los).</p>
       </div>
 
       <div class="stats-section">

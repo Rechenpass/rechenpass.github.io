@@ -162,8 +162,12 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 .search-input { flex: 1; border: none; background: none; padding: 12px 0; font-size: 16px; color: var(--text); }
 .search-input:focus { outline: none; }
-.filter-row { display: flex; gap: 10px; }
-.filter-row .input { flex: 1; min-width: 0; }
+.filter-fields { display: flex; gap: 10px; }
+.filter-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.filter-field-label { font-size: 11px; color: var(--muted); padding-left: 2px; }
+.filter-select { width: 100%; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 15px; font-family: inherit; }
+.filter-reset { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 13px; color: var(--muted); }
+.link-btn { background: none; border: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; cursor: pointer; }
 /* Button, der wie ein Dropdown aussieht und das Muskel-Sheet öffnet */
 .select-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; font-family: inherit; }
 .select-trigger .st-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -397,8 +401,9 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 /* Kopf der Bottom-Sheets bleibt beim Scrollen oben (Headline + Schließen-Button). */
 .modal-sheet > .sheet-head { position: sticky; top: 0; background: var(--surface); z-index: 2; padding-bottom: 6px; }
 .muscle-sheet-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
-.sheet-all { width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 15px; font-weight: 600; color: var(--text); }
-.sheet-all.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.muscle-all-row { display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; background: none; border: none; border-bottom: 1px solid var(--surface-2); padding: 12px 4px; font-size: 15px; color: var(--text); cursor: pointer; }
+.muscle-all-row.active { font-weight: 600; }
+.muscle-all-row .icon { color: var(--text); flex: none; }
 
 /* ---- Statistik ---- */
 .stats-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 11px; }
@@ -417,13 +422,14 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .hbar-val { font-size: 13px; font-weight: 700; color: var(--muted); width: 26px; text-align: right; flex: none; }
 
 /* ---- Training prüfen (Review) ---- */
-.review-card { gap: 9px; }
-.review-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.review-set { font-size: 13px; color: var(--muted); width: 58px; flex: none; }
-.review-field { display: inline-flex; align-items: center; gap: 6px; }
-.review-field input { width: 66px; border: 1px solid var(--border); background: var(--surface); border-radius: 9px; padding: 8px 10px; font-size: 16px; color: var(--text); -webkit-appearance: none; appearance: none; text-align: center; }
-.review-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.review-field span { font-size: 13px; color: var(--muted); }
+.review-card { gap: 12px; }
+.review-grid { display: grid; gap: 9px 12px; align-items: center; justify-content: start; }
+.review-grid.cols-1 { grid-template-columns: auto 64px; }
+.review-grid.cols-2 { grid-template-columns: auto 64px 64px; }
+.review-head { font-size: 12px; color: var(--muted); text-align: center; }
+.review-set { font-size: 14px; color: var(--muted); }
+.review-input { width: 100%; border: 1px solid var(--border); background: var(--surface); border-radius: 9px; padding: 10px 0; font-size: 16px; color: var(--text); -webkit-appearance: none; appearance: none; text-align: center; }
+.review-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
 /* ---- Statistik-Ansichten / Rad / Körpergewicht ---- */
 .stats-views { display: flex; flex-direction: column; gap: 16px; }

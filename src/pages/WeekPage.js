@@ -23,6 +23,7 @@ export function WeekPage() {
     if (e.type === 'cycling') {
       return e.rideType === 'indoor' ? 'Indoor-Training' : e.rideType === 'outdoor' ? 'Radausfahrt' : 'Radtraining';
     }
+    if (e.type === 'yoga') return 'Yoga';
     const p = getPlan(e.planId);
     return p ? p.name : 'Plan gelöscht';
   };
@@ -43,7 +44,7 @@ export function WeekPage() {
         ${WEEKDAYS.map((d, di) => {
           // Feste Reihenfolge: Krafttraining zuerst, dann Radtraining; je alphabetisch.
           const entries = [...(week[d.key] || [])].sort((a, b) => {
-            const rank = (e) => (e.type === 'cycling' ? 1 : 0);
+            const rank = (e) => (e.type === 'yoga' ? 2 : e.type === 'cycling' ? 1 : 0);
             return (rank(a) - rank(b)) || entryLabel(a).localeCompare(entryLabel(b), 'de');
           });
           const dayDate = new Date(parseDateInput(weekKey));
@@ -62,7 +63,7 @@ export function WeekPage() {
               ? html`<div class="day-empty">Ruhetag</div>`
               : html`<div class="day-entries">
                   ${entries.map((e) => {
-                    const status = (e.sessionId || e.rideId) ? 'done' : (isPast ? 'missed' : 'open');
+                    const status = (e.sessionId || e.rideId || e.yogaId) ? 'done' : (isPast ? 'missed' : 'open');
                     return html`
                     <div class=${'week-chip ' + status} key=${e.id}>
                       ${status === 'done' ? html`<${Icon} name="check" size=${15} />`
@@ -91,6 +92,9 @@ export function WeekPage() {
           </button>
           <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'indoor' }); setAdding(null); }}>
             <${Icon} name="bike" size=${18} /> Indoor-Training
+          </button>
+          <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'yoga' }); setAdding(null); }}>
+            <${Icon} name="yoga" size=${18} /> Yoga
           </button>
           ${state.plans.length === 0
             ? html`<p class="hint">Noch keine Trainingspläne – lege sie unter „Bibliothek → Pläne“ an.</p>`

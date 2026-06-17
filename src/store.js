@@ -10,7 +10,7 @@ const listeners = new Set();
 let state = loadState();
 
 function defaultState() {
-  return { exercises: [], plans: [], sessions: [], weeks: {}, rides: [], bodyWeights: [], sweets: {} };
+  return { exercises: [], plans: [], sessions: [], weeks: {}, rides: [], yogaSessions: [], bodyWeights: [], sweets: {} };
 }
 
 function normalize(s) {
@@ -38,23 +38,29 @@ function linkExistingActivities(merged) {
   const weeks = merged.weeks || {};
   const sessions = merged.sessions || [];
   const rides = merged.rides || [];
+  const yogaSessions = merged.yogaSessions || [];
   const usedS = new Set();
   const usedR = new Set();
+  const usedY = new Set();
   for (const wk of Object.values(weeks)) for (const list of Object.values(wk || {})) for (const e of (list || [])) {
     if (e.sessionId) usedS.add(e.sessionId);
     if (e.rideId) usedR.add(e.rideId);
+    if (e.yogaId) usedY.add(e.yogaId);
   }
   for (const [wkKey, wk] of Object.entries(weeks)) {
     for (const [dayKey, list] of Object.entries(wk || {})) {
       for (let i = 0; i < (list || []).length; i++) {
         const e = list[i];
-        if (e.sessionId || e.rideId) continue;
+        if (e.sessionId || e.rideId || e.yogaId) continue;
         if (e.type === 'strength') {
           const m = sessions.find((x) => !usedS.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
           if (m) { list[i] = { ...e, sessionId: m.id }; usedS.add(m.id); }
         } else if (e.type === 'cycling') {
           const m = rides.find((x) => !usedR.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
           if (m) { list[i] = { ...e, rideId: m.id }; usedR.add(m.id); }
+        } else if (e.type === 'yoga') {
+          const m = yogaSessions.find((x) => !usedY.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
+          if (m) { list[i] = { ...e, yogaId: m.id }; usedY.add(m.id); }
         }
       }
     }
@@ -256,6 +262,29 @@ export function deleteRide(id) {
   persist();
 }
 
+// ---- Yoga (schlanke Einheit: Datum + Dauer + Notiz) ----
+export function addYoga(data) {
+  const y = { id: uid(), createdAt: Date.now(), ...data };
+  const weeks = linkOrAddWeekEntry(state.weeks || {}, y, 'yoga', 'yogaId', {});
+  state = { ...state, yogaSessions: [...(state.yogaSessions || []), y], weeks };
+  persist();
+  return y;
+}
+
+export function updateYoga(id, patch) {
+  state = { ...state, yogaSessions: (state.yogaSessions || []).map((y) => (y.id === id ? { ...y, ...patch } : y)) };
+  persist();
+}
+
+export function deleteYoga(id) {
+  state = { ...state, yogaSessions: (state.yogaSessions || []).filter((y) => y.id !== id) };
+  persist();
+}
+
+export function getYoga(id) {
+  return (state.yogaSessions || []).find((y) => y.id === id);
+}
+
 // ---- Körpergewicht ----
 export function addBodyWeight(data) {
   const w = { id: uid(), ...data };
@@ -316,16 +345,18 @@ export function resetWeekEntry(weekKey, day, entryId) {
   if (!entry) return;
   let sessions = state.sessions || [];
   let rides = state.rides || [];
+  let yogaSessions = state.yogaSessions || [];
   if (entry.sessionId) sessions = sessions.filter((s) => s.id !== entry.sessionId);
   if (entry.rideId) rides = rides.filter((r) => r.id !== entry.rideId);
+  if (entry.yogaId) yogaSessions = yogaSessions.filter((y) => y.id !== entry.yogaId);
   const newList = entry.spontan
     ? list.filter((e) => e.id !== entryId)
     : list.map((e) => {
         if (e.id !== entryId) return e;
-        const { sessionId, rideId, ...rest } = e;
+        const { sessionId, rideId, yogaId, ...rest } = e;
         return rest;
       });
-  state = { ...state, sessions, rides, weeks: { ...weeks, [weekKey]: { ...wk, [day]: newList } } };
+  state = { ...state, sessions, rides, yogaSessions, weeks: { ...weeks, [weekKey]: { ...wk, [day]: newList } } };
   persist();
 }
 

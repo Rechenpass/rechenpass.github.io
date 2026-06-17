@@ -1,6 +1,6 @@
 import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
-import { useStore, getPlan, getSession, getRide, resetWeekEntry, lastBackupTs } from '../../store.js';
+import { useStore, getPlan, getSession, getRide, getYoga, resetWeekEntry, lastBackupTs } from '../../store.js';
 import { Icon } from '../../components/Icon.js';
 import { WEEKDAYS } from '../../constants.js';
 import { isoDate, parseDateInput, weekKeyFor, dayKeyFor, startOfWeek, weekRangeLabel } from '../../dateUtils.js';
@@ -25,6 +25,7 @@ function todayLabel() {
 // Bezeichnung eines Wocheneintrags (für Sortierung & Anzeige).
 function entryLabel(e) {
   if (e.type === 'cycling') return e.rideType === 'indoor' ? 'Indoor-Training' : 'Radausfahrt';
+  if (e.type === 'yoga') return 'Yoga';
   const p = getPlan(e.planId);
   return p ? p.name : 'Plan gelöscht';
 }
@@ -56,7 +57,7 @@ function ProgressStrand({ icon, label, done, overdue, planned }) {
   </div>`;
 }
 
-export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, onEditSession, selectedIso, setSelectedIso }) {
+export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, onEditSession, onLogYoga, onEditYoga, selectedIso, setSelectedIso }) {
   const state = useStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { requestDelete, deleteModal } = useEntryDeletion();
@@ -80,11 +81,11 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
 
   // Reihenfolge wie im Wochenplan: Kraft zuerst, dann Rad, je alphabetisch.
   const sortedTodays = [...todays].sort((a, b) => {
-    const rank = (e) => (e.type === 'cycling' ? 1 : 0);
+    const rank = (e) => (e.type === 'yoga' ? 2 : e.type === 'cycling' ? 1 : 0);
     return (rank(a) - rank(b)) || entryLabel(a).localeCompare(entryLabel(b), 'de');
   });
-  // „Erledigt?" – über die Verknüpfung (Session/Fahrt) am Eintrag.
-  const todaysWithDone = sortedTodays.map((e) => ({ e, done: !!(e.sessionId || e.rideId) }));
+  // „Erledigt?" – über die Verknüpfung (Session/Fahrt/Yoga) am Eintrag.
+  const todaysWithDone = sortedTodays.map((e) => ({ e, done: !!(e.sessionId || e.rideId || e.yogaId) }));
 
   // Fortschritt Woche – IMMER die aktuelle Woche (unabhängig vom gewählten Tag), getrennt Kraft/Rad
   const curWeekKey = weekKeyFor(Date.now());
@@ -138,6 +139,7 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
             const actions = done ? [
               { icon: 'edit', label: 'Bearbeiten', cls: 'edit', onClick: () => {
                   if (e.type === 'strength') { const s = getSession(e.sessionId); if (s) onEditSession(s); }
+                  else if (e.type === 'yoga') { const y = getYoga(e.yogaId); if (y) onEditYoga(y); }
                   else { const r = getRide(e.rideId); if (r) onEditRide(r); }
               } },
               { icon: 'reset', label: 'Zurücksetzen', cls: 'reset', onClick: () => {
@@ -159,6 +161,19 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
                 </div>
               </${SwipeRow}>`;
             }
+            if (e.type === 'yoga') {
+              return html`<${SwipeRow} key=${e.id} onDelete=${onDel} actions=${actions}>
+                <div class="today-row">
+                  <div class="pi-main">
+                    <div class="card-title">Yoga</div>
+                    <div class="plan-meta">Yoga</div>
+                  </div>
+                  ${done
+                    ? doneBadge
+                    : html`<button class="iconbtn start" onClick=${() => onLogYoga(dateForNew)} aria-label="Yoga-Session erfassen"><${Icon} name="edit" size=${22} /></button>`}
+                </div>
+              </${SwipeRow}>`;
+            }
             return html`<${SwipeRow} key=${e.id} onDelete=${onDel} actions=${actions}>
               <div class="today-row">
                 <div class="pi-main">
@@ -176,8 +191,9 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
       <div class="stats-section">
         <h3>Spontan starten</h3>
         <div class="home-actions">
-          ${isToday ? html`<button class="btn full" onClick=${onGoTraining}><${Icon} name="dumbbell" size=${18} /> Training auswählen</button>` : null}
+          ${isToday ? html`<button class="btn full" onClick=${onGoTraining}><${Icon} name="dumbbell" size=${18} /> Krafttraining auswählen</button>` : null}
           <button class="btn full" onClick=${() => onLogRide(dateForNew)}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
+          <button class="btn full" onClick=${() => onLogYoga(dateForNew)}><${Icon} name="yoga" size=${18} /> Yoga-Session erfassen</button>
         </div>
       </div>
 

@@ -9,13 +9,14 @@ import {
 import { CyclingStats } from './CyclingStats.js';
 import { BodyWeightStats } from './BodyWeightStats.js';
 import { SweetsStats } from './SweetsStats.js';
+import { YogaStats } from './YogaStats.js';
 
 const PERIODS = [{ value: 'day', label: 'Tag' }, { value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
 const NOUN = { day: 'Tag', week: 'Woche', month: 'Monat', year: 'Jahr' };
 const SPAN = { day: 7, week: 8, month: 6, year: 4 };
 
 // #37: Übersicht – Kraft und Rad getrennt gezählt, Einheiten pro Zeitraum, gemeinsamer Umschalter.
-function OverviewStats({ sessions, rides }) {
+function OverviewStats({ sessions, rides, yogaSessions }) {
   const [period, setPeriod] = useState('week');
   const periods = lastPeriods(period, SPAN[period]);
   const bars = (items) => {
@@ -24,7 +25,7 @@ function OverviewStats({ sessions, rides }) {
     return periods.map((p) => ({ label: p.label, value: m[p.key] || 0 }));
   };
 
-  if (sessions.length + rides.length === 0) {
+  if (sessions.length + rides.length + yogaSessions.length === 0) {
     return html`<div class="empty">
       <div class="empty-emoji">📊</div>
       <p>Noch keine Einheiten. Absolviere ein Training oder erfasse eine Fahrt.</p>
@@ -40,6 +41,10 @@ function OverviewStats({ sessions, rides }) {
     <div class="stats-section">
       <h3><span class="ov-dot" style="background:var(--success)"></span>Radtraining pro ${NOUN[period]}</h3>
       <${BarChart} data=${bars(rides)} color="var(--success)" />
+    </div>
+    <div class="stats-section">
+      <h3><span class="ov-dot" style="background:var(--teal)"></span>Yoga pro ${NOUN[period]}</h3>
+      <${BarChart} data=${bars(yogaSessions)} color="var(--teal)" />
     </div>
   </div>`;
 }
@@ -93,14 +98,16 @@ export function StatsPage() {
     <header class="screen-header"><h2>Statistik</h2></header>
     <div class="screen-body">
       <${Segmented}
-        options=${[{ value: 'overview', label: 'Übersicht' }, { value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'body', label: 'Körper' }]}
+        options=${[{ value: 'overview', label: 'Übersicht' }, { value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'yoga', label: 'Yoga' }, { value: 'body', label: 'Körper' }]}
         value=${view} onChange=${setView} />
       ${view === 'overview'
-        ? html`<${OverviewStats} sessions=${state.sessions || []} rides=${state.rides || []} />`
+        ? html`<${OverviewStats} sessions=${state.sessions || []} rides=${state.rides || []} yogaSessions=${state.yogaSessions || []} />`
         : view === 'kraft'
         ? html`<${KraftStats} sessions=${state.sessions || []} />`
         : view === 'rad'
         ? html`<${CyclingStats} rides=${state.rides || []} bodyWeights=${state.bodyWeights || []} />`
+        : view === 'yoga'
+        ? html`<${YogaStats} yogaSessions=${state.yogaSessions || []} />`
         : html`<${BodyWeightStats} bodyWeights=${state.bodyWeights || []} /><${SweetsStats} sweets=${state.sweets || {}} />`}
     </div>
   </div>`;

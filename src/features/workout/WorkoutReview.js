@@ -1,8 +1,11 @@
 import { html } from '../../html.js';
+import { Fragment } from 'preact';
 import { useState } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 
 // Abschluss-Kontrolle: alle erfassten Werte prüfen/korrigieren, ERST dann speichern.
+// Darstellung als kleine Tabelle je Übung: Einheiten einmal als Spaltenüberschrift, jeder Satz
+// eine ausgerichtete Zeile (Satz · Wdh. · kg). Feste Spaltenbreiten → Felder überall gleich breit.
 export function WorkoutReview({ entries, onConfirm, onCancel, editMode }) {
   const [rows, setRows] = useState(() => entries.map((e) => ({ ...e })));
   const update = (idx, patch) => setRows((rs) => rs.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
@@ -13,7 +16,7 @@ export function WorkoutReview({ entries, onConfirm, onCancel, editMode }) {
   const byEx = {};
   rows.forEach((row, idx) => {
     let g = byEx[row.exerciseId];
-    if (!g) { g = { name: row.exerciseName, rows: [] }; byEx[row.exerciseId] = g; groups.push(g); }
+    if (!g) { g = { name: row.exerciseName, type: row.type, rows: [] }; byEx[row.exerciseId] = g; groups.push(g); }
     g.rows.push({ row, idx });
   });
 
@@ -25,32 +28,36 @@ export function WorkoutReview({ entries, onConfirm, onCancel, editMode }) {
     <div class="screen-body">
       <p class="muted">${editMode ? 'Passe die erfassten Werte an und speichere.' : 'Stimmt alles? Du kannst die Werte noch anpassen. Wähle dann „Speichern & abschließen“.'}</p>
 
-      ${groups.map((g) => html`
+      ${groups.map((g) => {
+        const isTime = g.type === 'time';
+        const hasWeight = !isTime && g.rows.some(({ row }) => row.weight != null);
+        const cols = isTime || !hasWeight ? 1 : 2;
+        return html`
         <div class="stats-section review-card" key=${g.name}>
           <h3>${g.name}</h3>
-          ${g.rows.map(({ row, idx }) => html`
-            <div class="review-row" key=${idx}>
-              <span class="review-set">${g.rows.length > 1 ? 'Satz ' + row.setIndex : 'Satz'}</span>
-              ${row.type === 'time'
-                ? html`<label class="review-field">
-                    <input type="number" inputmode="numeric" min="0" value=${row.durationSec ?? ''}
-                      onInput=${(e) => update(idx, { durationSec: num(e.target.value) })} />
-                    <span>Sek.</span>
-                  </label>`
-                : html`
-                  <label class="review-field">
-                    <input type="number" inputmode="numeric" min="0" value=${row.reps ?? ''}
-                      onInput=${(e) => update(idx, { reps: num(e.target.value) })} />
-                    <span>Wdh.</span>
-                  </label>
-                  ${row.weight != null ? html`
-                    <label class="review-field">
-                      <input type="number" inputmode="decimal" min="0" step="0.5" value=${row.weight ?? ''}
-                        onInput=${(e) => update(idx, { weight: num(e.target.value) })} />
-                      <span>kg</span>
-                    </label>` : null}`}
-            </div>`)}
-        </div>`)}
+          <div class=${'review-grid cols-' + cols}>
+            <span></span>
+            ${isTime
+              ? html`<span class="review-head">Sek.</span>`
+              : html`<span class="review-head">Wdh.</span>${hasWeight ? html`<span class="review-head">kg</span>` : null}`}
+            ${g.rows.map(({ row, idx }) => {
+              const setLabel = g.rows.length > 1 ? 'Satz ' + row.setIndex : 'Satz';
+              return html`<${Fragment} key=${idx}>
+                <span class="review-set">${setLabel}</span>
+                ${isTime
+                  ? html`<input class="review-input" type="number" inputmode="numeric" min="0" aria-label=${setLabel + ', Sekunden'}
+                      value=${row.durationSec ?? ''} onInput=${(e) => update(idx, { durationSec: num(e.target.value) })} />`
+                  : html`
+                    <input class="review-input" type="number" inputmode="numeric" min="0" aria-label=${setLabel + ', Wiederholungen'}
+                      value=${row.reps ?? ''} onInput=${(e) => update(idx, { reps: num(e.target.value) })} />
+                    ${hasWeight ? html`
+                      <input class="review-input" type="number" inputmode="decimal" min="0" step="0.5" aria-label=${setLabel + ', Kilogramm'}
+                        value=${row.weight ?? ''} onInput=${(e) => update(idx, { weight: num(e.target.value) })} />` : null}`}
+              </${Fragment}>`;
+            })}
+          </div>
+        </div>`;
+      })}
 
       <button class="btn primary full big-btn" onClick=${() => onConfirm(rows)}>
         <${Icon} name="check" size=${20} /> ${editMode ? 'Speichern' : 'Speichern & abschließen'}
