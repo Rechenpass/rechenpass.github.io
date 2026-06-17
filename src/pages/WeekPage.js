@@ -94,7 +94,7 @@ export function WeekPage() {
             <${Icon} name="bike" size=${18} /> Indoor-Training
           </button>
           <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'yoga' }); setAdding(null); }}>
-            <${Icon} name="yoga" size=${18} /> Yoga
+            <${Icon} name="yoga" size=${18} stroke=${1.6} /> Yoga
           </button>
           ${state.plans.length === 0
             ? html`<p class="hint">Noch keine Trainingspläne – lege sie unter „Bibliothek → Pläne“ an.</p>`

@@ -33,8 +33,8 @@ const INNER = {
   info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 7 7 7"/>',
-  // Lotusblüte (5 Blätter, Outline) – Stil wie dumbbell/bike.
-  yoga: '<path d="M12 17 C10.2 13 10.2 8 12 4 C13.8 8 13.8 13 12 17 Z"/><path d="M12 17 C12.2 13 13.8 9.5 15.8 6.8 C17 9.5 16.2 13.5 12 17 Z"/><path d="M12 17 C11.8 13 10.2 9.5 8.2 6.8 C7 9.5 7.8 13.5 12 17 Z"/><path d="M12 17 C13.5 14 16.5 12 19.5 10.5 C19.8 13.5 17 15.8 12 17 Z"/><path d="M12 17 C10.5 14 7.5 12 4.5 10.5 C4.2 13.5 7 15.8 12 17 Z"/>',
+  // Lotusblüte (5 Blätter, unten aufgefächert) – Stil wie dumbbell/bike, wird dünner gezeichnet (stroke 1.6).
+  yoga: '<path d="M11 16 C9.5 12 9.8 7 12 4 C14.2 7 14.5 12 13 16 Z"/><path d="M13 16 C13.6 12.5 14.6 9 16.4 6.8 C17.8 9 17 13 14.8 16 Z"/><path d="M11 16 C10.4 12.5 9.4 9 7.6 6.8 C6.2 9 7 13 9.2 16 Z"/><path d="M14.8 16 C16 14 18 12 20 10.5 C20.4 13 18.6 15 16 16 Z"/><path d="M9.2 16 C8 14 6 12 4 10.5 C3.6 13 5.4 15 8 16 Z"/>',
 };
 
 export function Icon({ name, size = 22, stroke = 2 }) {

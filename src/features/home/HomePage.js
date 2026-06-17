@@ -192,8 +192,8 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
         <h3>Spontan starten</h3>
         <div class="home-actions">
           ${isToday ? html`<button class="btn full" onClick=${onGoTraining}><${Icon} name="dumbbell" size=${18} /> Krafttraining auswählen</button>` : null}
-          <button class="btn full" onClick=${() => onLogRide(dateForNew)}><${Icon} name="bike" size=${18} /> Fahrt erfassen</button>
-          <button class="btn full" onClick=${() => onLogYoga(dateForNew)}><${Icon} name="yoga" size=${18} /> Yoga-Session erfassen</button>
+          <button class="btn full" onClick=${() => onLogRide(dateForNew)}><${Icon} name="bike" size=${18} /> Fahrradfahrt erfassen</button>
+          <button class="btn full" onClick=${() => onLogYoga(dateForNew)}><${Icon} name="yoga" size=${18} stroke=${1.6} /> Yoga-Session erfassen</button>
         </div>
       </div>
 
