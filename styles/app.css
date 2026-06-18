@@ -175,13 +175,19 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 .select-trigger .icon { color: var(--muted); flex: none; }
 /* „Weitere Filter" – Akkordeon */
 .filter-acc { display: flex; flex-direction: column; }
-.filter-acc-head { display: flex; align-items: center; gap: 8px; width: 100%; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: var(--radius-sm); padding: 11px 12px; font-size: 15px; font-family: inherit; }
+.filter-acc-head { display: flex; align-items: center; justify-content: space-between; width: 100%; border: none; border-bottom: 1px solid var(--surface-2); background: none; color: var(--text); padding: 11px 2px; font-size: 15px; font-family: inherit; }
 .filter-acc-head .icon { color: var(--muted); flex: none; }
-.filter-acc-title { flex: 1; text-align: left; }
-.filter-acc-badge { flex: none; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
-.filter-acc-body { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.filter-acc-title { text-align: left; }
+.filter-acc-body { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
 /* Mehrfachauswahl-Sheet: Optionsgruppe (Zeilen gestapelt mit Trennlinien) */
 .ms-group { display: flex; flex-direction: column; }
+/* „Alle"-Zeile mit Schalter + „Auswahl zurücksetzen" (Muskel-Sheet) */
+.ms-all { display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; border-bottom: 1px solid var(--surface-2); font-size: 15px; color: var(--text); }
+.ms-reset { text-align: center; padding: 2px 0 0; }
+.switch { position: relative; width: 42px; height: 25px; flex: none; border: none; border-radius: 999px; background: #c7ccd4; padding: 0; -webkit-appearance: none; appearance: none; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: left .15s; }
+.switch.on { background: var(--accent); }
+.switch.on::after { left: 19px; }
 
 /* Karten */
 .card-list { display: flex; flex-direction: column; gap: 9px; }

@@ -52,9 +52,8 @@ export function Filters({ filters, onChange }) {
         type="button" class=${'filter-acc-head' + (moreOpen ? ' open' : '')}
         aria-expanded=${moreOpen} onClick=${() => setMoreOpen(!moreOpen)}
       >
-        <${Icon} name=${moreOpen ? 'up' : 'down'} size=${18} />
         <span class="filter-acc-title">Weitere Filter</span>
-        ${activeCount > 0 ? html`<span class="filter-acc-badge">${activeCount}</span>` : null}
+        <${Icon} name=${moreOpen ? 'up' : 'down'} size=${18} />
       </button>
       ${moreOpen
         ? html`<div class="filter-acc-body">
@@ -96,7 +95,7 @@ export function Filters({ filters, onChange }) {
           selected=${groups} onChange=${(v) => set({ groups: v })} onClose=${() => setSheet(null)} />`
       : null}
     ${sheet === 'muscle'
-      ? html`<${MultiSelectSheet} title="Muskeln" searchable
+      ? html`<${MultiSelectSheet} title="Muskeln" searchable chips
           groups=${REGIONS.map((r) => ({ title: r, options: MUSCLES_BY_REGION[r] }))}
           selected=${muscles} onChange=${(v) => set({ muscles: v })} onClose=${() => setSheet(null)} />`
       : null}
@@ -105,7 +104,7 @@ export function Filters({ filters, onChange }) {
 
 // Bottom-Sheet mit Mehrfachauswahl (Häkchen). „Alle" oben leert die Auswahl.
 // Optionen flach (eine Gruppe ohne Titel) oder nach Gruppen mit Titel; optional mit Suche.
-function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchable, labelOf = (x) => x }) {
+function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchable, chips, labelOf = (x) => x }) {
   const [q, setQ] = useState('');
   const needle = q.trim().toLowerCase();
   const shown = useMemo(
@@ -136,29 +135,51 @@ function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchab
         : null}
 
       <div class="muscle-sheet-list">
-        <button type="button" class=${'muscle-all-row' + (selected.length === 0 ? ' active' : '')} onClick=${() => onChange([])}>
-          <span>Alle</span>
-          ${selected.length === 0 ? html`<${Icon} name="check" size=${18} />` : null}
-        </button>
+        ${chips
+          ? html`<div class="ms-all">
+              <span>Alle</span>
+              <button
+                type="button" role="switch" aria-checked=${selected.length === 0} aria-label="Alle Muskeln"
+                class=${'switch' + (selected.length === 0 ? ' on' : '')}
+                onClick=${() => onChange([])}
+              ></button>
+            </div>`
+          : html`<button type="button" class=${'muscle-all-row' + (selected.length === 0 ? ' active' : '')} onClick=${() => onChange([])}>
+              <span>Alle</span>
+              ${selected.length === 0 ? html`<${Icon} name="check" size=${18} />` : null}
+            </button>`}
         ${shown.length === 0
           ? html`<p class="hint">Keine Treffer für „${q}“.</p>`
           : shown.map(
               (g) => html`<div class="ms-group" key=${g.title || 'flat'}>
                 ${g.title ? html`<div class="muscle-group-title">${g.title}</div>` : null}
-                ${g.options.map(
-                  (o) => html`<button
-                    type="button" key=${o}
-                    class=${'muscle-all-row' + (selected.includes(o) ? ' active' : '')}
-                    onClick=${() => toggle(o)}
-                  >
-                    <span>${labelOf(o)}</span>
-                    ${selected.includes(o) ? html`<${Icon} name="check" size=${18} />` : null}
-                  </button>`
-                )}
+                ${chips
+                  ? html`<div class="chips">
+                      ${g.options.map(
+                        (o) => html`<button
+                          type="button" key=${o}
+                          class=${'chip' + (selected.includes(o) ? ' active' : '')}
+                          onClick=${() => toggle(o)}
+                        >${labelOf(o)}</button>`
+                      )}
+                    </div>`
+                  : g.options.map(
+                      (o) => html`<button
+                        type="button" key=${o}
+                        class=${'muscle-all-row' + (selected.includes(o) ? ' active' : '')}
+                        onClick=${() => toggle(o)}
+                      >
+                        <span>${labelOf(o)}</span>
+                        ${selected.includes(o) ? html`<${Icon} name="check" size=${18} />` : null}
+                      </button>`
+                    )}
               </div>`
             )}
       </div>
 
+      ${chips && selected.length > 0
+        ? html`<div class="ms-reset"><button type="button" class="link-btn" onClick=${() => onChange([])}>Auswahl zurücksetzen</button></div>`
+        : null}
       <button class="btn full" onClick=${onClose}>Fertig</button>
     </div>
   </div>`;
