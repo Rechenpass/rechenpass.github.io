@@ -1,16 +1,44 @@
 import { html } from '../../html.js';
 import { useState, useMemo } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
-import { MUSCLES_BY_REGION, REGIONS, GROUPS } from '../../constants.js';
+import { MUSCLES_BY_REGION, REGIONS, GROUPS, PHASES, phaseLabel } from '../../constants.js';
 
-// Filter: Name (Suche), Körperregion + Trainingsart (Dropdowns), Muskeln (Bottom-Sheet mit Suche).
+const PHASE_VALUES = PHASES.map((p) => p.key);
+
+// Feldbeschriftung bei Mehrfachauswahl (Variante B):
+// 0 → „Alle", genau 1 → der Name, 2+ → „N <Begriff>" (z. B. „3 Muskeln").
+function fieldLabel(selected, nounPlural, labelOf = (x) => x) {
+  if (!selected || selected.length === 0) return 'Alle';
+  if (selected.length === 1) return labelOf(selected[0]);
+  return `${selected.length} ${nounPlural}`;
+}
+
+// Filter: Phase (Dropdown) · Suche · „Weitere Filter" (Akkordeon: Körperregion, Trainingsart, Muskeln).
+// Alle Dropdowns erlauben Mehrfachauswahl über ein Häkchen-Bottom-Sheet.
 export function Filters({ filters, onChange }) {
   const set = (patch) => onChange({ ...filters, ...patch });
-  const [muscleSheet, setMuscleSheet] = useState(false);
+  const [sheet, setSheet] = useState(null);     // null | 'phase' | 'region' | 'group' | 'muscle'
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  const activeCount = [filters.region, filters.group, filters.muscle].filter(Boolean).length;
+  const phases = filters.phases || [];
+  const regions = filters.regions || [];
+  const groups = filters.groups || [];
+  const muscles = filters.muscles || [];
+
+  const activeCount = (regions.length ? 1 : 0) + (groups.length ? 1 : 0) + (muscles.length ? 1 : 0);
+
+  const trigger = (label, onClick, none) => html`
+    <button type="button" class="filter-select select-trigger" aria-haspopup="dialog" onClick=${onClick}>
+      <span class=${'st-label' + (none ? ' placeholder' : '')}>${label}</span>
+      <${Icon} name="down" size=${16} />
+    </button>`;
 
   return html`<div class="filters">
+    <div class="filter-field">
+      <span class="filter-field-label">Phase</span>
+      ${trigger(fieldLabel(phases, 'Phasen', phaseLabel), () => setSheet('phase'), phases.length === 0)}
+    </div>
+
     <div class="search">
       <${Icon} name="search" size=${18} />
       <input
@@ -19,104 +47,119 @@ export function Filters({ filters, onChange }) {
       />
     </div>
 
-    <div class="filter-fields">
-      <label class="filter-field">
-        <span class="filter-field-label">Körperregion</span>
-        <select class="filter-select" value=${filters.region} onChange=${(e) => set({ region: e.target.value })}>
-          <option value="">Alle</option>
-          ${REGIONS.map((r) => html`<option value=${r}>${r}</option>`)}
-        </select>
-      </label>
-      <label class="filter-field">
-        <span class="filter-field-label">Trainingsart</span>
-        <select class="filter-select" value=${filters.group} onChange=${(e) => set({ group: e.target.value })}>
-          <option value="">Alle</option>
-          ${GROUPS.map((g) => html`<option value=${g}>${g}</option>`)}
-        </select>
-      </label>
-    </div>
-
-    <div class="filter-field">
-      <span class="filter-field-label">Muskeln</span>
+    <div class="filter-acc">
       <button
-        type="button" class="filter-select select-trigger" aria-haspopup="dialog"
-        onClick=${() => setMuscleSheet(true)}
+        type="button" class=${'filter-acc-head' + (moreOpen ? ' open' : '')}
+        aria-expanded=${moreOpen} onClick=${() => setMoreOpen(!moreOpen)}
       >
-        <span class=${'st-label' + (filters.muscle ? '' : ' placeholder')}>${filters.muscle || 'Alle Muskeln'}</span>
-        <${Icon} name="down" size=${16} />
+        <${Icon} name=${moreOpen ? 'up' : 'down'} size=${18} />
+        <span class="filter-acc-title">Weitere Filter</span>
+        ${activeCount > 0 ? html`<span class="filter-acc-badge">${activeCount}</span>` : null}
       </button>
+      ${moreOpen
+        ? html`<div class="filter-acc-body">
+            <div class="filter-field">
+              <span class="filter-field-label">Körperregion</span>
+              ${trigger(fieldLabel(regions, 'Regionen'), () => setSheet('region'), regions.length === 0)}
+            </div>
+            <div class="filter-field">
+              <span class="filter-field-label">Trainingsart</span>
+              ${trigger(fieldLabel(groups, 'Arten'), () => setSheet('group'), groups.length === 0)}
+            </div>
+            <div class="filter-field">
+              <span class="filter-field-label">Muskeln</span>
+              ${trigger(fieldLabel(muscles, 'Muskeln'), () => setSheet('muscle'), muscles.length === 0)}
+            </div>
+            ${activeCount > 0
+              ? html`<div class="filter-reset">
+                  <span>${activeCount} Filter aktiv</span>
+                  <button type="button" class="link-btn" onClick=${() => set({ regions: [], groups: [], muscles: [] })}>Zurücksetzen</button>
+                </div>`
+              : null}
+          </div>`
+        : null}
     </div>
 
-    ${activeCount > 0
-      ? html`<div class="filter-reset">
-          <span>${activeCount} Filter aktiv</span>
-          <button type="button" class="link-btn" onClick=${() => set({ region: '', muscle: '', group: '' })}>Zurücksetzen</button>
-        </div>`
+    ${sheet === 'phase'
+      ? html`<${MultiSelectSheet} title="Phase" labelOf=${phaseLabel}
+          groups=${[{ title: null, options: PHASE_VALUES }]}
+          selected=${phases} onChange=${(v) => set({ phases: v })} onClose=${() => setSheet(null)} />`
       : null}
-
-    ${muscleSheet
-      ? html`<${MuscleSheet}
-          value=${filters.muscle}
-          onSelect=${(m) => { set({ muscle: m }); setMuscleSheet(false); }}
-          onClose=${() => setMuscleSheet(false)}
-        />`
+    ${sheet === 'region'
+      ? html`<${MultiSelectSheet} title="Körperregion"
+          groups=${[{ title: null, options: REGIONS }]}
+          selected=${regions} onChange=${(v) => set({ regions: v })} onClose=${() => setSheet(null)} />`
+      : null}
+    ${sheet === 'group'
+      ? html`<${MultiSelectSheet} title="Trainingsart"
+          groups=${[{ title: null, options: GROUPS }]}
+          selected=${groups} onChange=${(v) => set({ groups: v })} onClose=${() => setSheet(null)} />`
+      : null}
+    ${sheet === 'muscle'
+      ? html`<${MultiSelectSheet} title="Muskeln" searchable
+          groups=${REGIONS.map((r) => ({ title: r, options: MUSCLES_BY_REGION[r] }))}
+          selected=${muscles} onChange=${(v) => set({ muscles: v })} onClose=${() => setSheet(null)} />`
       : null}
   </div>`;
 }
 
-// Bottom-Sheet zur Auswahl EINES Muskels (Filter). Suche oben, „Alle Muskeln" als dezente
-// Häkchen-Zeile, darunter die einzelnen Muskeln als Chips nach Region gruppiert (gewählter blau).
-function MuscleSheet({ value, onSelect, onClose }) {
+// Bottom-Sheet mit Mehrfachauswahl (Häkchen). „Alle" oben leert die Auswahl.
+// Optionen flach (eine Gruppe ohne Titel) oder nach Gruppen mit Titel; optional mit Suche.
+function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchable, labelOf = (x) => x }) {
   const [q, setQ] = useState('');
   const needle = q.trim().toLowerCase();
-  const groups = useMemo(
-    () =>
-      REGIONS.map((region) => ({
-        region,
-        muscles: MUSCLES_BY_REGION[region].filter((m) => m.toLowerCase().includes(needle)),
-      })).filter((g) => g.muscles.length > 0),
-    [needle]
+  const shown = useMemo(
+    () => groups
+      .map((g) => ({ title: g.title, options: g.options.filter((o) => labelOf(o).toLowerCase().includes(needle)) }))
+      .filter((g) => g.options.length > 0),
+    [groups, needle]
   );
+  const toggle = (o) => onChange(selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o]);
 
   return html`<div class="modal-overlay" onClick=${onClose}>
     <div class="modal-sheet muscle-sheet" onClick=${(ev) => ev.stopPropagation()}>
       <div class="sheet-head">
-        <div class="modal-title">Muskeln</div>
+        <div class="modal-title">${title}</div>
         <button class="iconbtn small" onClick=${onClose} aria-label="Schließen">
           <${Icon} name="x" size=${18} />
         </button>
       </div>
 
-      <div class="search">
-        <${Icon} name="search" size=${18} />
-        <input
-          class="search-input" type="search" placeholder="Muskel suchen …"
-          value=${q} onInput=${(e) => setQ(e.target.value)}
-        />
-      </div>
+      ${searchable
+        ? html`<div class="search">
+            <${Icon} name="search" size=${18} />
+            <input
+              class="search-input" type="search" placeholder="Muskel suchen …"
+              value=${q} onInput=${(e) => setQ(e.target.value)}
+            />
+          </div>`
+        : null}
 
       <div class="muscle-sheet-list">
-        <button type="button" class=${'muscle-all-row' + (value ? '' : ' active')} onClick=${() => onSelect('')}>
-          <span>Alle Muskeln</span>
-          ${!value ? html`<${Icon} name="check" size=${18} />` : null}
+        <button type="button" class=${'muscle-all-row' + (selected.length === 0 ? ' active' : '')} onClick=${() => onChange([])}>
+          <span>Alle</span>
+          ${selected.length === 0 ? html`<${Icon} name="check" size=${18} />` : null}
         </button>
-        ${groups.length === 0
+        ${shown.length === 0
           ? html`<p class="hint">Keine Treffer für „${q}“.</p>`
-          : groups.map(
-              (g) => html`<div class="muscle-group" key=${g.region}>
-                <div class="muscle-group-title">${g.region}</div>
-                <div class="chips">
-                  ${g.muscles.map(
-                    (m) => html`<button
-                      type="button" key=${m}
-                      class=${'chip' + (m === value ? ' active' : '')}
-                      onClick=${() => onSelect(m)}
-                    >${m}</button>`
-                  )}
-                </div>
+          : shown.map(
+              (g) => html`<div class="ms-group" key=${g.title || 'flat'}>
+                ${g.title ? html`<div class="muscle-group-title">${g.title}</div>` : null}
+                ${g.options.map(
+                  (o) => html`<button
+                    type="button" key=${o}
+                    class=${'muscle-all-row' + (selected.includes(o) ? ' active' : '')}
+                    onClick=${() => toggle(o)}
+                  >
+                    <span>${labelOf(o)}</span>
+                    ${selected.includes(o) ? html`<${Icon} name="check" size=${18} />` : null}
+                  </button>`
+                )}
               </div>`
             )}
       </div>
+
+      <button class="btn full" onClick=${onClose}>Fertig</button>
     </div>
   </div>`;
 }

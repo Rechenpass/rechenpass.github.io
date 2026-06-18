@@ -11,8 +11,7 @@ import { PHASES } from '../../constants.js';
 export function ExercisesPage({ sub, onSub }) {
   const state = useStore();
   const [editing, setEditing] = useState(null); // null | 'new' | exercise
-  const [phaseFilter, setPhaseFilter] = useState('all');
-  const [filters, setFilters] = useState({ search: '', region: '', muscle: '', group: '' });
+  const [filters, setFilters] = useState({ search: '', regions: [], muscles: [], groups: [], phases: [] });
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 1600); };
@@ -24,15 +23,16 @@ export function ExercisesPage({ sub, onSub }) {
 
   const visible = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
+    const { regions, muscles, groups, phases } = filters;
     return state.exercises.filter((e) => {
       if (q && !e.name.toLowerCase().includes(q)) return false;
-      if (filters.region && !(e.bodyRegions || []).includes(filters.region)) return false;
-      if (filters.muscle && !(e.primaryMuscles || []).includes(filters.muscle)) return false;
-      if (filters.group && e.group !== filters.group) return false;
-      if (phaseFilter !== 'all' && e.phase !== phaseFilter) return false;
+      if (regions.length && !regions.some((r) => (e.bodyRegions || []).includes(r))) return false;
+      if (muscles.length && !muscles.some((m) => (e.primaryMuscles || []).includes(m))) return false;
+      if (groups.length && !groups.includes(e.group)) return false;
+      if (phases.length && !phases.includes(e.phase)) return false;
       return true;
     });
-  }, [state.exercises, filters, phaseFilter]);
+  }, [state.exercises, filters]);
 
   if (editing) {
     return html`<${ExerciseForm}
@@ -56,10 +56,6 @@ export function ExercisesPage({ sub, onSub }) {
     </header>
 
     <div class="screen-body">
-      <${Segmented}
-        options=${[{ value: 'all', label: 'Alle' }, ...PHASES.map((p) => ({ value: p.key, label: p.label }))]}
-        value=${phaseFilter} onChange=${setPhaseFilter} />
-
       <${Filters} filters=${filters} onChange=${setFilters} />
 
       ${state.exercises.length === 0
