@@ -1,5 +1,5 @@
 import { html } from '../../html.js';
-import { useState, useMemo } from 'preact/hooks';
+import { useState, useMemo, useEffect } from 'preact/hooks';
 import { useStore } from '../../store.js';
 import { Icon } from '../../components/Icon.js';
 import { Filters } from '../exercises/Filters.js';
@@ -9,6 +9,9 @@ export function ExercisePicker({ onAdd, onClose, addedCount }) {
   const state = useStore();
   const [filters, setFilters] = useState({ search: '', regions: [], muscles: [], groups: [], phases: [] });
   const [toast, setToast] = useState('');
+
+  // Beim Öffnen oben bei den Filtern starten (nicht an der Scroll-Position des Editors hängen bleiben).
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const visible = useMemo(() => {
     const q = filters.search.trim().toLowerCase();

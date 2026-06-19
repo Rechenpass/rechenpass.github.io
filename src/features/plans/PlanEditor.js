@@ -1,6 +1,6 @@
 import { html } from '../../html.js';
 import { confirmAsk } from '../../components/confirmHost.js';
-import { useState } from 'preact/hooks';
+import { useState, useRef, useEffect } from 'preact/hooks';
 import { Icon } from '../../components/Icon.js';
 import { PlanItemCard } from './PlanItemCard.js';
 import { ExercisePicker } from './ExercisePicker.js';
@@ -12,6 +12,11 @@ export function PlanEditor({ initial, onClose }) {
   const [items, setItems] = useState(() => (initial ? initial.items.map((it) => ({ ...it })) : []));
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState('');
+  const scrollRef = useRef(0);
+
+  // Scroll-Position des Editors merken und nach dem Schließen des Pickers wiederherstellen.
+  const openPicker = () => { scrollRef.current = window.scrollY; setPicking(true); };
+  useEffect(() => { if (!picking) window.scrollTo(0, scrollRef.current); }, [picking]);
 
   const addExercise = (ex) => setItems((arr) => [...arr, createPlanItem(ex)]);
   const updateItem = (updated) => setItems((arr) => arr.map((it) => (it.id === updated.id ? updated : it)));
@@ -83,7 +88,7 @@ export function PlanEditor({ initial, onClose }) {
           </div>
         </section>`)}
 
-      <button class="btn primary full" onClick=${() => setPicking(true)}>
+      <button class="btn primary full" onClick=${openPicker}>
         <${Icon} name="plus" size=${18} /> Übung hinzufügen
       </button>
 
