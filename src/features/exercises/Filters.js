@@ -13,7 +13,7 @@ function fieldLabel(selected, nounPlural, labelOf = (x) => x) {
   return `${selected.length} ${nounPlural}`;
 }
 
-// Filter: Phase (Dropdown) · Suche · „Weitere Filter" (Akkordeon: Körperregion, Trainingsart, Muskeln).
+// Filter: Suche · Phase (Dropdown) · „Weitere Filter" (Akkordeon: Körperregion, Trainingsart, Muskeln).
 // Alle Dropdowns erlauben Mehrfachauswahl über ein Häkchen-Bottom-Sheet.
 export function Filters({ filters, onChange }) {
   const set = (patch) => onChange({ ...filters, ...patch });
@@ -34,11 +34,6 @@ export function Filters({ filters, onChange }) {
     </button>`;
 
   return html`<div class="filters">
-    <div class="filter-field">
-      <span class="filter-field-label">Phase</span>
-      ${trigger(fieldLabel(phases, 'Phasen', phaseLabel), () => setSheet('phase'), phases.length === 0)}
-    </div>
-
     <div class="search">
       <${Icon} name="search" size=${18} />
       <input
@@ -47,13 +42,18 @@ export function Filters({ filters, onChange }) {
       />
     </div>
 
-    <div class="filter-acc">
+    <div class="filter-field">
+      <span class="filter-field-label">Phase</span>
+      ${trigger(fieldLabel(phases, 'Phasen', phaseLabel), () => setSheet('phase'), phases.length === 0)}
+    </div>
+
+    <div class="card filter-acc-card">
       <button
-        type="button" class=${'filter-acc-head' + (moreOpen ? ' open' : '')}
+        type="button" class="filter-acc-head"
         aria-expanded=${moreOpen} onClick=${() => setMoreOpen(!moreOpen)}
       >
         <span class="filter-acc-title">Weitere Filter</span>
-        <${Icon} name=${moreOpen ? 'up' : 'down'} size=${18} />
+        <span class="iconbtn small"><${Icon} name=${moreOpen ? 'up' : 'down'} size=${20} /></span>
       </button>
       ${moreOpen
         ? html`<div class="filter-acc-body">
@@ -106,6 +106,7 @@ export function Filters({ filters, onChange }) {
 // Optionen flach (eine Gruppe ohne Titel) oder nach Gruppen mit Titel; optional mit Suche.
 function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchable, chips, labelOf = (x) => x }) {
   const [q, setQ] = useState('');
+  const [allOff, setAllOff] = useState(false);   // „Alle"-Schalter manuell ausgeschaltet
   const needle = q.trim().toLowerCase();
   const shown = useMemo(
     () => groups
@@ -113,10 +114,11 @@ function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchab
       .filter((g) => g.options.length > 0),
     [groups, needle]
   );
-  const toggle = (o) => onChange(selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o]);
+  const allOn = selected.length === 0 && !allOff;   // „Alle"-Schalter an (keine Einschränkung)
+  const toggle = (o) => { setAllOff(false); onChange(selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o]); };
 
   return html`<div class="modal-overlay" onClick=${onClose}>
-    <div class="modal-sheet muscle-sheet" onClick=${(ev) => ev.stopPropagation()}>
+    <div class=${'modal-sheet muscle-sheet' + (chips ? ' tall' : '')} onClick=${(ev) => ev.stopPropagation()}>
       <div class="sheet-head">
         <div class="modal-title">${title}</div>
         <button class="iconbtn small" onClick=${onClose} aria-label="Schließen">
@@ -139,9 +141,9 @@ function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchab
           ? html`<div class="ms-all">
               <span>Alle</span>
               <button
-                type="button" role="switch" aria-checked=${selected.length === 0} aria-label="Alle Muskeln"
-                class=${'switch' + (selected.length === 0 ? ' on' : '')}
-                onClick=${() => onChange([])}
+                type="button" role="switch" aria-checked=${allOn} aria-label="Alle Muskeln"
+                class=${'switch' + (allOn ? ' on' : '')}
+                onClick=${() => { if (allOn) setAllOff(true); else { setAllOff(false); onChange([]); } }}
               ></button>
             </div>`
           : html`<button type="button" class=${'muscle-all-row' + (selected.length === 0 ? ' active' : '')} onClick=${() => onChange([])}>
@@ -177,10 +179,7 @@ function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchab
             )}
       </div>
 
-      ${chips && selected.length > 0
-        ? html`<div class="ms-reset"><button type="button" class="link-btn" onClick=${() => onChange([])}>Auswahl zurücksetzen</button></div>`
-        : null}
-      <button class="btn full" onClick=${onClose}>Fertig</button>
+      <button class="btn full" onClick=${onClose}>Auswahl bestätigen</button>
     </div>
   </div>`;
 }

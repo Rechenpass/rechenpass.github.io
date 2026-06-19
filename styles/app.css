@@ -174,16 +174,14 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 .select-trigger .st-label.placeholder { color: var(--muted); }
 .select-trigger .icon { color: var(--muted); flex: none; }
 /* „Weitere Filter" – Akkordeon */
-.filter-acc { display: flex; flex-direction: column; }
-.filter-acc-head { display: flex; align-items: center; justify-content: space-between; width: 100%; border: none; border-bottom: 1px solid var(--surface-2); background: none; color: var(--text); padding: 11px 2px; font-size: 15px; font-family: inherit; }
-.filter-acc-head .icon { color: var(--muted); flex: none; }
+.card.filter-acc-card { flex-direction: column; align-items: stretch; gap: 0; padding: 0 14px; }
+.filter-acc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: none; background: none; color: var(--text); padding: 13px 0; font-size: 15px; font-family: inherit; cursor: pointer; }
 .filter-acc-title { text-align: left; }
-.filter-acc-body { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; }
+.filter-acc-body { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--surface-2); padding: 12px 0 14px; }
 /* Mehrfachauswahl-Sheet: Optionsgruppe (Zeilen gestapelt mit Trennlinien) */
 .ms-group { display: flex; flex-direction: column; }
-/* „Alle"-Zeile mit Schalter + „Auswahl zurücksetzen" (Muskel-Sheet) */
+/* „Alle"-Zeile mit Schalter (Muskel-Sheet) */
 .ms-all { display: flex; align-items: center; justify-content: space-between; padding: 12px 2px; border-bottom: 1px solid var(--surface-2); font-size: 15px; color: var(--text); }
-.ms-reset { text-align: center; padding: 2px 0 0; }
 .switch { position: relative; width: 42px; height: 25px; flex: none; border: none; border-radius: 999px; background: #c7ccd4; padding: 0; -webkit-appearance: none; appearance: none; }
 .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 21px; height: 21px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: left .15s; }
 .switch.on { background: var(--accent); }
@@ -396,11 +394,13 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .day-entries { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
 .week-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 6px 7px 6px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .week-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+/* Bei langem Titel schrumpft nur der Text – Status-Icon behält seine Größe (kein Stauchen). */
+.week-chip > .icon { flex: none; }
 .week-chip.open { background: var(--accent-soft); color: var(--accent); }
 .week-chip.done { background: #e7f7ee; color: #15803d; }
 .week-chip.missed { background: var(--danger-soft); color: var(--danger); }
 .chip-check { color: var(--success); display: inline-flex; }
-.chip-x { display: inline-flex; align-items: center; justify-content: center; border: none; background: rgba(0, 0, 0, .08); color: inherit; width: 19px; height: 19px; border-radius: 50%; padding: 0; }
+.chip-x { display: inline-flex; align-items: center; justify-content: center; border: none; background: rgba(0, 0, 0, .08); color: inherit; width: 19px; height: 19px; border-radius: 50%; padding: 0; flex: none; }
 
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); display: flex; align-items: flex-end; justify-content: center; z-index: 100; }
 .modal-sheet { background: var(--surface); width: 100%; max-width: var(--maxw); border-radius: 18px 18px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; max-height: 80vh; overflow-y: auto; }
@@ -409,9 +409,14 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .modal-opt:active { background: var(--border); }
 .modal-opt.danger { color: var(--danger); }
 .modal-sheet .btn { margin-top: 6px; }
+/* „Hinzufügen"-Sheet (Wochenplan): fixer Kopf, eigene scrollende Liste, fixer Abbrechen-Button */
+.modal-sheet.adding-sheet { overflow: hidden; }
+.adding-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 8px; padding-bottom: 2px; }
 
 /* Muskelgruppen-Filter-Sheet: fixer Kopf + Suche, darunter scrollende Liste */
 .modal-sheet.muscle-sheet { overflow: hidden; gap: 10px; }
+/* Muskel-Sheet insgesamt höher als die übrigen Sheets */
+.modal-sheet.tall { max-height: 92vh; min-height: 75vh; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; }
 /* Kopf der Bottom-Sheets bleibt beim Scrollen oben (Headline + Schließen-Button). */
 .modal-sheet > .sheet-head { position: sticky; top: 0; background: var(--surface); z-index: 2; padding-bottom: 6px; }

@@ -82,26 +82,28 @@ export function WeekPage() {
 
     ${adding ? html`
       <div class="modal-overlay" onClick=${() => setAdding(null)}>
-        <div class="modal-sheet" onClick=${(ev) => ev.stopPropagation()}>
+        <div class="modal-sheet adding-sheet" onClick=${(ev) => ev.stopPropagation()}>
           <div class="sheet-head">
             <div class="modal-title">Zum ${(WEEKDAYS.find((w) => w.key === adding) || {}).label} hinzufügen</div>
             <button class="iconbtn small" onClick=${() => setAdding(null)} aria-label="Schließen"><${Icon} name="x" size=${18} /></button>
           </div>
-          <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'outdoor' }); setAdding(null); }}>
-            <${Icon} name="bike" size=${18} /> Radausfahrt
-          </button>
-          <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'indoor' }); setAdding(null); }}>
-            <${Icon} name="bike" size=${18} /> Indoor-Training
-          </button>
-          <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'yoga' }); setAdding(null); }}>
-            <${Icon} name="yoga" size=${18} stroke=${1.6} /> Yoga
-          </button>
-          ${state.plans.length === 0
-            ? html`<p class="hint">Noch keine Trainingspläne – lege sie unter „Bibliothek → Pläne“ an.</p>`
-            : state.plans.map((p) => html`
-              <button class="modal-opt" key=${p.id} onClick=${() => { addWeekEntry(weekKey, adding, { type: 'strength', planId: p.id }); setAdding(null); }}>
-                <${Icon} name="dumbbell" size=${18} /> ${p.name}
-              </button>`)}
+          <div class="adding-list">
+            <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'outdoor' }); setAdding(null); }}>
+              <${Icon} name="bike" size=${18} /> Radausfahrt
+            </button>
+            <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'cycling', rideType: 'indoor' }); setAdding(null); }}>
+              <${Icon} name="bike" size=${18} /> Indoor-Training
+            </button>
+            <button class="modal-opt" onClick=${() => { addWeekEntry(weekKey, adding, { type: 'yoga' }); setAdding(null); }}>
+              <${Icon} name="yoga" size=${18} stroke=${1.6} /> Yoga
+            </button>
+            ${state.plans.length === 0
+              ? html`<p class="hint">Noch keine Trainingspläne – lege sie unter „Bibliothek → Pläne“ an.</p>`
+              : state.plans.map((p) => html`
+                <button class="modal-opt" key=${p.id} onClick=${() => { addWeekEntry(weekKey, adding, { type: 'strength', planId: p.id }); setAdding(null); }}>
+                  <${Icon} name="dumbbell" size=${18} /> ${p.name}
+                </button>`)}
+          </div>
           <button class="btn full" onClick=${() => setAdding(null)}>Abbrechen</button>
         </div>
       </div>` : null}
