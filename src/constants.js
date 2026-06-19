@@ -41,7 +41,7 @@ export const ALL_MUSCLES = Object.values(MUSCLES_BY_REGION).flat();
 export const SETS_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);          // 1..10
 export const REPS_OPTIONS = Array.from({ length: 50 }, (_, i) => i + 1);          // 1..50
 export const DURATION_OPTIONS = Array.from({ length: 12 }, (_, i) => (i + 1) * 10); // 10..120 s
-export const REST_OPTIONS = Array.from({ length: 10 }, (_, i) => i * 10);          // 0..90 s (Phase 2)
+export const REST_OPTIONS = [0, 5, ...Array.from({ length: 9 }, (_, i) => (i + 1) * 10)]; // 0, 5, dann 10..90 s
 
 export const WEEKDAYS = [
   { key: 'mon', label: 'Montag' },

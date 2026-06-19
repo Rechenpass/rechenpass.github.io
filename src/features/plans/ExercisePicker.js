@@ -2,23 +2,26 @@ import { html } from '../../html.js';
 import { useState, useMemo } from 'preact/hooks';
 import { useStore } from '../../store.js';
 import { Icon } from '../../components/Icon.js';
-import { Segmented } from '../../components/Segmented.js';
+import { Filters } from '../exercises/Filters.js';
 import { PHASES } from '../../constants.js';
 
 export function ExercisePicker({ onAdd, onClose, addedCount }) {
   const state = useStore();
-  const [search, setSearch] = useState('');
-  const [phase, setPhase] = useState('all');
+  const [filters, setFilters] = useState({ search: '', regions: [], muscles: [], groups: [], phases: [] });
   const [toast, setToast] = useState('');
 
   const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = filters.search.trim().toLowerCase();
+    const { regions, muscles, groups, phases } = filters;
     return state.exercises.filter((e) => {
       if (q && !e.name.toLowerCase().includes(q)) return false;
-      if (phase !== 'all' && e.phase !== phase) return false;
+      if (regions.length && !regions.some((r) => (e.bodyRegions || []).includes(r))) return false;
+      if (muscles.length && !muscles.some((m) => (e.primaryMuscles || []).includes(m))) return false;
+      if (groups.length && !groups.includes(e.group)) return false;
+      if (phases.length && !phases.includes(e.phase)) return false;
       return true;
     });
-  }, [state.exercises, search, phase]);
+  }, [state.exercises, filters]);
 
   const grouped = PHASES
     .map((p) => ({ phase: p, items: visible.filter((e) => e.phase === p.key) }))
@@ -43,13 +46,7 @@ export function ExercisePicker({ onAdd, onClose, addedCount }) {
           <p>Keine Übungen im Pool. Lege zuerst unter „Bibliothek“ welche an.</p>
         </div>
       ` : html`
-        <${Segmented}
-          options=${[{ value: 'all', label: 'Alle' }, ...PHASES.map((p) => ({ value: p.key, label: p.label }))]}
-          value=${phase} onChange=${setPhase} />
-        <div class="search">
-          <${Icon} name="search" size=${18} />
-          <input class="search-input" type="search" placeholder="Übung suchen …" value=${search} onInput=${(e) => setSearch(e.target.value)} />
-        </div>
+        <${Filters} filters=${filters} onChange=${setFilters} />
         ${grouped.length === 0
           ? html`<div class="empty"><p>Keine Übung gefunden.</p></div>`
           : grouped.map((g) => html`
