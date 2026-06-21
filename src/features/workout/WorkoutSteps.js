@@ -19,31 +19,39 @@ function TimerRing({ frac, label, color, track }) {
   </svg>`;
 }
 
-function Stepper({ label, value, onChange, step = 1, min = 0, suffix = '' }) {
+function HStepper({ label, value, onChange, step = 1, min = 0 }) {
   const round = (n) => Number(n.toFixed(2));
-  return html`<div class="stepper">
-    <span class="stepper-label">${label}</span>
-    <div class="stepper-row">
+  return html`<div class="reps-stepper">
+    <span class="reps-stepper-label">${label}</span>
+    <div class="reps-stepper-ctrl">
       <button type="button" class="step-btn" onClick=${() => onChange(round(Math.max(min, value - step)))}>−</button>
-      <span class="stepper-value">${value}${suffix}</span>
+      <span class="reps-stepper-val">${value}</span>
       <button type="button" class="step-btn" onClick=${() => onChange(round(value + step))}>+</button>
     </div>
   </div>`;
 }
 
-// Satz-Übung: Zielwert anzeigen, tatsächliche Wdh./Gewicht erfassen, „Satz fertig“.
-// Darunter Button-Gruppe „Extrasatz“ (nur bei Wdh.-Übungen) + „Überspringen“ im Pause-Look.
+// Satz-Übung: Zielwert groß; erreichte Werte als Akkordeon – zu = kompakte Zeile „N Wdh · M kg“
+// + „Anpassen“ mit Kreis-Icon, auf = ±-Regler. „Satz fertig“ speichert die aktuellen Werte.
 export function RepsWorkStep({ step, onNext, onSkip, onAddSet }) {
   const [reps, setReps] = useState(step.targetReps || 0);
   const [weight, setWeight] = useState(step.weight ?? 0);
+  const [adjust, setAdjust] = useState(false);
+  const summary = step.weighted ? `${reps} Wdh · ${weight} kg` : `${reps} Wdh`;
   return html`<div class="work-body">
     <div class="work-target">
       <div class="big-number">${step.targetReps ?? '—'}</div>
       <div class="big-label">Wiederholungen${step.extra ? ' · Extra-Satz' : (step.setCount > 1 ? ` · Satz ${step.setIndex}/${step.setCount}` : '')}</div>
     </div>
-    <div class="log-row">
-      <${Stepper} label="Geschafft (Wdh.)" value=${reps} onChange=${setReps} step=${1} />
-      ${step.weighted ? html`<${Stepper} label="Gewicht (kg)" value=${weight} onChange=${setWeight} step=${0.5} />` : null}
+    <div class="reps-acc">
+      <button type="button" class="reps-acc-head" aria-expanded=${adjust} onClick=${() => setAdjust(!adjust)}>
+        <span class="reps-acc-summary">${summary}</span>
+        <span class="reps-acc-toggle">Anpassen <span class="iconbtn small"><${Icon} name=${adjust ? 'up' : 'down'} size=${20} /></span></span>
+      </button>
+      ${adjust ? html`<div class="reps-acc-body">
+        <${HStepper} label="Wdh. geschafft" value=${reps} onChange=${setReps} step=${1} />
+        ${step.weighted ? html`<${HStepper} label="Gewicht (kg)" value=${weight} onChange=${setWeight} step=${0.5} />` : null}
+      </div>` : null}
     </div>
     <button class="btn primary full big-btn" onClick=${() => onNext({ reps, weight: step.weighted ? weight : null })}>
       <${Icon} name="check" size=${20} /> Satz fertig

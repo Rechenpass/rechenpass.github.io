@@ -40,13 +40,16 @@ h1, h2, h3, p { margin: 0; }
   max-width: var(--maxw);
   margin: 0 auto;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg);
   position: relative;
 }
 .app-main { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom)); }
 
 /* Screen */
-.screen { display: flex; flex-direction: column; min-height: 100vh; }
+.screen { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+/* Workout-Screens füllen den Bildschirm exakt und scrollen nicht (nur die Übungsfläche scrollt zur Not). */
+.screen.workout { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
 .screen-header {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; gap: 12px;
@@ -192,7 +195,7 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 .card {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 14px; box-shadow: var(--shadow);
+  padding: 14px; box-shadow: var(--shadow); color: var(--text);
 }
 .card:active { background: var(--surface-2); }
 .card-main { flex: 1; min-width: 0; }
@@ -305,7 +308,7 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .pb-seg.warmup .pb-seg-fill { background: #b45309; }
 .pb-seg.training .pb-seg-fill { background: var(--accent); }
 .pb-seg.cooldown .pb-seg-fill { background: var(--teal); }
-.workout-body { gap: 14px; }
+.workout-body { gap: 14px; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .work-head { display: flex; align-items: center; justify-content: space-between; }
 .work-exno { font-size: 13px; font-weight: 600; color: var(--muted); }
 .work-name { font-size: 24px; font-weight: 750; letter-spacing: -.02em; }
@@ -329,6 +332,16 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .big-btn { padding: 16px; font-size: 17px; margin-top: 4px; }
 .work-btn-row { display: flex; gap: 10px; width: 100%; }
 .work-btn-row .btn { flex: 1; }
+/* Satz-Übung: erreichte Werte als Akkordeon (zu = kompakte Zeile, auf = ±-Regler) */
+.reps-acc { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.reps-acc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: none; background: none; color: var(--text); padding: 8px 8px 8px 14px; font-family: inherit; cursor: pointer; }
+.reps-acc-summary { font-size: 20px; font-weight: 700; }
+.reps-acc-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); flex: none; }
+.reps-acc-body { display: flex; flex-direction: column; gap: 14px; padding: 4px 14px 14px; }
+.reps-stepper { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reps-stepper-label { font-size: 14px; font-weight: 600; color: var(--muted); }
+.reps-stepper-ctrl { display: flex; align-items: center; gap: 14px; }
+.reps-stepper-val { font-size: 22px; font-weight: 750; min-width: 50px; text-align: center; }
 .timer-ring { display: block; margin: 2px auto; }
 .timer-ring-arc { transition: stroke-dashoffset .3s linear, stroke .3s ease; }
 .timer-ring-text { fill: var(--text); font-size: 30px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
