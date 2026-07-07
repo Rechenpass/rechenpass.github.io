@@ -52,17 +52,23 @@ export function useCountdown(seconds, onDone) {
 //  1) Ein leiser Dauer-Ton hält die Sitzung über das ganze Training wach.
 //  2) Bei jeder Zustandsänderung / Rückkehr in den Vordergrund wird sie wieder aufgeweckt.
 //  3) beep() spielt den Ton erst, wenn die Sitzung wirklich wach ist (resume() wirkt verzögert).
+//  4) Ein Watchdog-Intervall weckt die Sitzung auch dann wieder auf, wenn iOS bei einer
+//     Benachrichtigung IM VORDERGRUND unterbricht – da feuert am Ende kein Event.
 let audioCtx;
 let keepAlive;            // leiser Dauer-Ton (BufferSource), hält die iOS-Audio-Sitzung wach
+let watchdog;            // Intervall, das die Sitzung regelmäßig wieder aufweckt
 let listenersAttached = false;
 let soundOn = true;        // Signaltöne an/aus (aus den Einstellungen, beim Trainingsstart gesetzt)
 
 // Töne global an-/abschalten.
 export function setSoundEnabled(on) { soundOn = !!on; }
 
+// Leisen Dauer-Ton starten – immer frisch, denn nach einer Unterbrechung ist der alte „tot".
 function startKeepAlive() {
+  if (!audioCtx) return;
+  try { if (keepAlive) keepAlive.stop(); } catch (e) { /* egal */ }
+  keepAlive = null;
   try {
-    if (!audioCtx || keepAlive) return;
     const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate); // 1 Sample Stille
     const src = audioCtx.createBufferSource();
     src.buffer = buf;
@@ -73,20 +79,24 @@ function startKeepAlive() {
   } catch (e) { /* egal */ }
 }
 
+// Sitzung aufwecken: läuft sie, nichts tun; sonst resume() und den Dauer-Ton neu starten.
 function wake() {
+  if (!audioCtx) return;
   try {
-    if (audioCtx && audioCtx.state !== 'running') {
-      const p = audioCtx.resume();
-      if (p && p.catch) p.catch(() => {});
+    if (audioCtx.state === 'running') {
+      if (!keepAlive) startKeepAlive();
+      return;
     }
-    startKeepAlive();
+    const p = audioCtx.resume();
+    if (p && p.then) p.then(startKeepAlive).catch(() => {});
+    else startKeepAlive();
   } catch (e) { /* egal */ }
 }
 
 function onVisible() { if (document.visibilityState === 'visible') wake(); }
 function onStateChange() { wake(); }
 
-// Durch eine Nutzer-Geste aufrufen (Trainingsstart): entsperrt Audio + startet den Wachhalter.
+// Durch eine Nutzer-Geste aufrufen (Trainingsstart): entsperrt Audio + Wachhalter + Watchdog.
 export function unlockAudio() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -96,11 +106,13 @@ export function unlockAudio() {
       listenersAttached = true;
     }
     wake();
+    if (!watchdog) watchdog = setInterval(wake, 800);
   } catch (e) { /* kein Audio verfügbar – egal */ }
 }
 
-// Beim Verlassen des Trainings aufrufen: Dauer-Ton stoppen, Listener lösen (Akku schonen).
+// Beim Verlassen des Trainings aufrufen: Watchdog + Dauer-Ton stoppen, Listener lösen (Akku schonen).
 export function releaseAudio() {
+  if (watchdog) { clearInterval(watchdog); watchdog = null; }
   try { if (keepAlive) keepAlive.stop(); } catch (e) { /* egal */ }
   keepAlive = null;
   try {

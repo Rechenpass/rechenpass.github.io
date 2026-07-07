@@ -37,6 +37,9 @@ export function CyclingStats({ rides, bodyWeights }) {
   const totalHm = Math.round(data.reduce((a, r) => a + (r.elevationM || 0), 0));
   const hasWatt = data.some((r) => r.type === 'indoor' && r.avgWatt != null);
   const hasWeight = (bodyWeights || []).length > 0;
+  const totalKcal = Math.round(data.reduce((a, r) => a + (r.kcal || 0), 0));
+  const hasKcal = data.some((r) => r.kcal != null);
+  const indoorRows = [...data].filter((r) => r.type === 'indoor' && (r.avgWatt != null || r.kcal != null)).sort((a, b) => b.date - a.date).slice(0, 12);
 
   const series = (valueFn, agg, prec = 1) => {
     const periods = lastPeriods(period, SPAN[period]);
@@ -66,6 +69,7 @@ export function CyclingStats({ rides, bodyWeights }) {
       <div class="stat"><div class="stat-num">${data.length}</div><div class="stat-label">Fahrten</div></div>
       <div class="stat"><div class="stat-num">${totalKm}</div><div class="stat-label">km gesamt</div></div>
       <div class="stat"><div class="stat-num">${totalHm}</div><div class="stat-label">Höhenmeter</div></div>
+      ${hasKcal ? html`<div class="stat"><div class="stat-num">${totalKcal}</div><div class="stat-label">kcal gesamt</div></div>` : null}
     </div>
     <${Segmented} options=${PERIODS} value=${period} onChange=${setPeriod} />
 
@@ -73,6 +77,7 @@ export function CyclingStats({ rides, bodyWeights }) {
       <div class="stats-section"><h3>Radtraining pro ${NOUN[period]}</h3><${BarChart} data=${series(() => 1, 'count')} /></div>
       <div class="stats-section"><h3>Kilometer pro ${NOUN[period]}</h3><${BarChart} data=${series((r) => r.distanceKm, 'sum')} /></div>
       <div class="stats-section"><h3>Höhenmeter pro ${NOUN[period]}</h3><${BarChart} data=${series((r) => r.elevationM, 'sum')} /></div>
+      ${hasKcal ? html`<div class="stats-section"><h3>Kalorien pro ${NOUN[period]}</h3><div class="stats-caption">Indoor – Summe der erfassten kcal</div><${BarChart} data=${series((r) => r.kcal, 'sum')} /></div>` : null}
       ${hasWatt ? html`<div class="stats-section">
         <h3>Ø Watt pro ${NOUN[period]}</h3><div class="stats-caption">Indoor – Durchschnitt der erfassten Watt-Werte</div>
         <${LineChart} data=${series((r) => (r.type === 'indoor' ? r.avgWatt : null), 'avg')} unit=${' W'} />
@@ -83,6 +88,20 @@ export function CyclingStats({ rides, bodyWeights }) {
       </div>` : null}
       ${hasWatt && !hasWeight ? html`<div class="stats-section">
         <div class="stats-caption">Trage unter „Körper“ dein Körpergewicht ein – dann zeige ich dir hier zusätzlich Watt/kg.</div>
+      </div>` : null}
+      ${indoorRows.length ? html`<div class="stats-section">
+        <h3>Verlauf Indoor-Fahrten</h3>
+        <div class="stats-caption">Neueste ${indoorRows.length} Indoor-Einheiten (Ø Watt · kcal)</div>
+        <table class="wtab">
+          <thead><tr><th>Datum</th><th>Ø Watt</th><th>kcal</th></tr></thead>
+          <tbody>
+            ${indoorRows.map((r) => { const dt = new Date(r.date); return html`<tr key=${r.id}>
+              <td>${dt.getDate()}.${dt.getMonth() + 1}.</td>
+              <td>${r.avgWatt != null ? r.avgWatt + ' W' : '–'}</td>
+              <td>${r.kcal != null ? r.kcal : '–'}</td>
+            </tr>`; })}
+          </tbody>
+        </table>
       </div>` : null}
     `}
   </div>`;

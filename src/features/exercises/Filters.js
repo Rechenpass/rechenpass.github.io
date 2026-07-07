@@ -37,9 +37,12 @@ export function Filters({ filters, onChange }) {
     <div class="search">
       <${Icon} name="search" size=${18} />
       <input
-        class="search-input" type="search" placeholder="Übung suchen …"
+        class="search-input" type="text" placeholder="Übung suchen …"
         value=${filters.search} onInput=${(e) => set({ search: e.target.value })}
       />
+      ${filters.search
+        ? html`<button type="button" class="search-clear" onClick=${() => set({ search: '' })} aria-label="Suche löschen"><${Icon} name="x" size=${16} /></button>`
+        : null}
     </div>
 
     <div class="filter-field">
@@ -130,9 +133,12 @@ function MultiSelectSheet({ title, groups, selected, onChange, onClose, searchab
         ? html`<div class="search">
             <${Icon} name="search" size=${18} />
             <input
-              class="search-input" type="search" placeholder="Muskel suchen …"
+              class="search-input" type="text" placeholder="Muskel suchen …"
               value=${q} onInput=${(e) => setQ(e.target.value)}
             />
+            ${q
+              ? html`<button type="button" class="search-clear" onClick=${() => setQ('')} aria-label="Suche löschen"><${Icon} name="x" size=${16} /></button>`
+              : null}
           </div>`
         : null}
 

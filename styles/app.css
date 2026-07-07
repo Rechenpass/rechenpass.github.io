@@ -165,6 +165,8 @@ textarea.input { resize: vertical; min-height: 90px; line-height: 1.5; }
 }
 .search-input { flex: 1; border: none; background: none; padding: 12px 0; font-size: 16px; color: var(--text); }
 .search-input:focus { outline: none; }
+.search-clear { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: none; padding: 0; border-radius: 50%; background: var(--surface-2); color: var(--muted); }
+.search-clear:active { background: var(--border); }
 .filter-fields { display: flex; gap: 10px; }
 .filter-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .filter-field-label { font-size: 11px; color: var(--muted); padding-left: 2px; }
@@ -391,6 +393,11 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .summary-stats .stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 8px; text-align: center; box-shadow: var(--shadow); }
 .stat-num { font-size: 23px; font-weight: 800; }
 .stat-label { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.wtab { width: 100%; border-collapse: collapse; font-size: 14px; }
+.wtab th { font-size: 12px; color: var(--muted); font-weight: 600; text-align: right; padding: 2px 0 6px; }
+.wtab th:first-child { text-align: left; }
+.wtab td { padding: 7px 0; border-top: 1px solid var(--surface-2); text-align: right; font-weight: 600; }
+.wtab td:first-child { text-align: left; color: var(--muted); font-weight: 400; }
 .start-row { display: flex; align-items: center; gap: 12px; width: 100%; }
 .start-row .pi-main { flex: 1; min-width: 0; }
 .start-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex: none; }
@@ -463,6 +470,9 @@ select.mini-input { padding-right: 28px; background-image: url("data:image/svg+x
 .review-set { font-size: 14px; color: var(--muted); }
 .review-input { width: 100%; border: 1px solid var(--border); background: var(--surface); border-radius: 9px; padding: 10px 0; font-size: 16px; color: var(--text); -webkit-appearance: none; appearance: none; text-align: center; }
 .review-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.review-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.addset-btn { align-self: flex-start; padding: 7px 12px; font-size: 14px; }
+.addex-btn { border-style: dashed; }
 
 /* ---- Statistik-Ansichten / Rad / Körpergewicht ---- */
 .stats-views { display: flex; flex-direction: column; gap: 16px; }

@@ -17,7 +17,7 @@ import { updateSession, getPrefs } from './store.js';
 import { isoDate } from './dateUtils.js';
 import { unlockAudio, setSoundEnabled } from './features/workout/workoutRuntime.js';
 
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 
 function App() {
   const [tab, setTab] = useState('heute');
@@ -26,6 +26,7 @@ function App() {
   const [yogaForm, setYogaForm] = useState(null);       // null | 'new' | yoga-session
   const [editSession, setEditSession] = useState(null); // erledigtes Krafttraining nachträglich prüfen/korrigieren
   const [pendingDate, setPendingDate] = useState(null); // Datum für rückwirkendes Erfassen (vergangene Tage)
+  const [pendingRideType, setPendingRideType] = useState(null); // Art (indoor/outdoor) beim Erfassen einer geplanten Einheit
   const [selectedIso, setSelectedIso] = useState(() => isoDate(Date.now())); // gewählter Dashboard-Tag (übersteht das Erfassen)
   const [updateReady, setUpdateReady] = useState(false);
 
@@ -58,7 +59,7 @@ function App() {
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
 
   const startWorkout = (plan, date) => { const p = getPrefs(); setSoundEnabled(p.sound); if (p.sound) unlockAudio(); setPendingDate(date ?? null); setActivePlan(plan); };
-  const logRideFromHome = (date) => { setPendingDate(date ?? null); setRideForm('new'); };
+  const logRideFromHome = (date, rideType) => { setPendingDate(date ?? null); setPendingRideType(rideType ?? null); setRideForm('new'); };
   const logYogaFromHome = (date) => { setPendingDate(date ?? null); setYogaForm('new'); };
 
   // Vollbild-Abläufe liegen „über" den Tabs (ohne untere Leiste – Fokus, eigener Zurück/Abbrechen-Button)
@@ -67,8 +68,8 @@ function App() {
       onExit=${() => { setActivePlan(null); setPendingDate(null); }} /></div>`;
   }
   if (rideForm) {
-    return html`<div class="app"><${RideForm} initial=${rideForm === 'new' ? null : rideForm} initialDate=${rideForm === 'new' ? pendingDate : null}
-      onClose=${() => { setRideForm(null); setPendingDate(null); }} /></div>`;
+    return html`<div class="app"><${RideForm} initial=${rideForm === 'new' ? null : rideForm} initialType=${rideForm === 'new' ? pendingRideType : null} initialDate=${rideForm === 'new' ? pendingDate : null}
+      onClose=${() => { setRideForm(null); setPendingDate(null); setPendingRideType(null); }} /></div>`;
   }
   if (yogaForm) {
     return html`<div class="app"><${YogaForm} initial=${yogaForm === 'new' ? null : yogaForm} initialDate=${yogaForm === 'new' ? pendingDate : null}

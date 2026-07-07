@@ -182,7 +182,7 @@ export function HomePage({ onStartWorkout, onLogRide, onGoTraining, onEditRide, 
                 </div>
                 ${done
                   ? doneBadge
-                  : html`<button class="iconbtn start" onClick=${() => onLogRide(dateForNew)} aria-label="Fahrt erfassen"><${Icon} name="edit" size=${22} /></button>`}
+                  : html`<button class="iconbtn start" onClick=${() => onLogRide(dateForNew, e.rideType)} aria-label="Fahrt erfassen"><${Icon} name="edit" size=${22} /></button>`}
               </div>
             </${SwipeRow}>`;
           })}

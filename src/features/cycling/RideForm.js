@@ -39,10 +39,10 @@ const emptyDraft = () => ({
   avgWatt: null, kcal: null, name: '', note: '',
 });
 
-export function RideForm({ initial, initialDate, onClose }) {
+export function RideForm({ initial, initialType, initialDate, onClose }) {
   const [d, setD] = useState(() => (initial
     ? { ...emptyDraft(), ...initial, date: isoDate(initial.date) }
-    : { ...emptyDraft(), ...(initialDate != null ? { date: isoDate(initialDate) } : {}) }));
+    : { ...emptyDraft(), ...(initialType ? { type: initialType } : {}), ...(initialDate != null ? { date: isoDate(initialDate) } : {}) }));
   const set = (patch) => setD((prev) => ({ ...prev, ...patch }));
   const isIndoor = d.type === 'indoor';
 
