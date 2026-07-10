@@ -32,6 +32,7 @@ export function ExercisePicker({ onAdd, onClose, addedCount }) {
 
   const add = (ex) => {
     onAdd(ex);
+    setFilters((f) => ({ ...f, search: '' })); // Suche nach dem Hinzufügen leeren → sofort wieder alle Übungen sichtbar
     setToast(`„${ex.name}“ hinzugefügt`);
     setTimeout(() => setToast(''), 1200);
   };

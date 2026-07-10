@@ -47,13 +47,34 @@ function linkExistingActivities(merged) {
     if (e.rideId) usedR.add(e.rideId);
     if (e.yogaId) usedY.add(e.yogaId);
   }
+  // Heilung alter Fehlzuordnungen: hängt eine Kraft-Session an einem Eintrag mit ANDEREM Plan,
+  // wird sie zum offenen Eintrag desselben Tags mit passendem Plan verschoben (nur wenn ein solcher
+  // existiert – sonst unangetastet, kein Datenverlust). Idempotent.
+  for (const wk of Object.values(weeks)) {
+    for (const list of Object.values(wk || {})) {
+      for (let i = 0; i < (list || []).length; i++) {
+        const e = list[i];
+        if (e.type !== 'strength' || !e.sessionId) continue;
+        const s = sessions.find((x) => x.id === e.sessionId);
+        if (!s || s.planId == null || e.planId == null || s.planId === e.planId) continue;
+        const j = list.findIndex((o) => o.type === 'strength' && !o.sessionId && !o.rideId && o.planId === s.planId);
+        if (j >= 0) {
+          list[j] = { ...list[j], sessionId: s.id };
+          const { sessionId, ...rest } = e;
+          list[i] = rest;
+        }
+      }
+    }
+  }
   for (const [wkKey, wk] of Object.entries(weeks)) {
     for (const [dayKey, list] of Object.entries(wk || {})) {
       for (let i = 0; i < (list || []).length; i++) {
         const e = list[i];
         if (e.sessionId || e.rideId || e.yogaId) continue;
         if (e.type === 'strength') {
-          const m = sessions.find((x) => !usedS.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
+          const sameDay = (x) => !usedS.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey;
+          // nach Plan verknüpfen; nur ein Eintrag OHNE Plan nimmt notfalls irgendeine Session des Tags
+          const m = sessions.find((x) => sameDay(x) && x.planId === e.planId) || (e.planId == null ? sessions.find(sameDay) : null);
           if (m) { list[i] = { ...e, sessionId: m.id }; usedS.add(m.id); }
         } else if (e.type === 'cycling') {
           const m = rides.find((x) => !usedR.has(x.id) && weekKeyFor(x.date) === wkKey && dayKeyFor(x.date) === dayKey);
@@ -209,7 +230,13 @@ function linkOrAddWeekEntry(weeks, activity, type, linkKey, extra) {
   const day = dayKeyFor(activity.date);
   const week = { ...(weeks[wk] || {}) };
   const list = [...(week[day] || [])];
-  const i = list.findIndex((e) => e.type === type && !e.sessionId && !e.rideId);
+  const open = (e) => e.type === type && !e.sessionId && !e.rideId;
+  // Kraft: den geplanten Eintrag mit GLEICHEM Plan verknüpfen – sonst würde bei mehreren Plänen
+  // am selben Tag ein anderer Plan fälschlich als erledigt markiert. Ohne passenden geplanten
+  // Eintrag als „spontan absolviert" eintragen.
+  const i = (type === 'strength' && extra && extra.planId != null)
+    ? list.findIndex((e) => open(e) && e.planId === extra.planId)
+    : list.findIndex(open);
   if (i >= 0) list[i] = { ...list[i], [linkKey]: activity.id };
   else list.push({ id: uid(), type, spontan: true, [linkKey]: activity.id, ...extra });
   week[day] = list;
