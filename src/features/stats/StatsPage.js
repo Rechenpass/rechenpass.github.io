@@ -2,6 +2,7 @@ import { html } from '../../html.js';
 import { useState } from 'preact/hooks';
 import { useStore } from '../../store.js';
 import { Segmented } from '../../components/Segmented.js';
+import { Icon } from '../../components/Icon.js';
 import { BarChart, LineChart, HBars } from './Charts.js';
 import {
   lastPeriods, periodKey, exercisesFromSessions, exMeta, exerciseMetric, exerciseSeries, muscleFrequency,
@@ -14,6 +15,8 @@ import { YogaStats } from './YogaStats.js';
 const PERIODS = [{ value: 'day', label: 'Tag' }, { value: 'week', label: 'Woche' }, { value: 'month', label: 'Monat' }, { value: 'year', label: 'Jahr' }];
 const NOUN = { day: 'Tag', week: 'Woche', month: 'Monat', year: 'Jahr' };
 const SPAN = { day: 7, week: 8, month: 6, year: 4 };
+// Oben nur drei Punkte: Übersicht · Sportart (natives Auswahlmenü) · Körper.
+const SPORTS = [{ value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'yoga', label: 'Yoga' }];
 
 // #37: Übersicht – Kraft und Rad getrennt gezählt, Einheiten pro Zeitraum, gemeinsamer Umschalter.
 function OverviewStats({ sessions, rides, yogaSessions }) {
@@ -93,22 +96,33 @@ function KraftStats({ sessions }) {
 
 export function StatsPage() {
   const state = useStore();
-  const [view, setView] = useState('overview');
+  const [view, setView] = useState('overview'); // 'overview' | 'sport' | 'body'
+  const [sport, setSport] = useState('kraft');
+  const sportLabel = (SPORTS.find((s) => s.value === sport) || SPORTS[0]).label;
   return html`<div class="screen">
     <header class="screen-header"><h2>Statistik</h2></header>
     <div class="screen-body">
-      <${Segmented}
-        options=${[{ value: 'overview', label: 'Übersicht' }, { value: 'kraft', label: 'Kraft' }, { value: 'rad', label: 'Rad' }, { value: 'yoga', label: 'Yoga' }, { value: 'body', label: 'Körper' }]}
-        value=${view} onChange=${setView} />
+      <div class="segmented">
+        <button type="button" class=${'seg' + (view === 'overview' ? ' active' : '')} onClick=${() => setView('overview')}>Übersicht</button>
+        <div class=${'seg seg-select' + (view === 'sport' ? ' active' : '')}>
+          ${sportLabel}<${Icon} name="down" size=${14} />
+          <select aria-label="Sportart wählen" value=${sport}
+            onClick=${() => setView('sport')}
+            onChange=${(e) => { setSport(e.target.value); setView('sport'); }}>
+            ${SPORTS.map((s) => html`<option key=${s.value} value=${s.value}>${s.label}</option>`)}
+          </select>
+        </div>
+        <button type="button" class=${'seg' + (view === 'body' ? ' active' : '')} onClick=${() => setView('body')}>Körper</button>
+      </div>
       ${view === 'overview'
         ? html`<${OverviewStats} sessions=${state.sessions || []} rides=${state.rides || []} yogaSessions=${state.yogaSessions || []} />`
-        : view === 'kraft'
+        : view === 'body'
+        ? html`<${BodyWeightStats} bodyWeights=${state.bodyWeights || []} /><${SweetsStats} sweets=${state.sweets || {}} />`
+        : sport === 'kraft'
         ? html`<${KraftStats} sessions=${state.sessions || []} />`
-        : view === 'rad'
+        : sport === 'rad'
         ? html`<${CyclingStats} rides=${state.rides || []} bodyWeights=${state.bodyWeights || []} />`
-        : view === 'yoga'
-        ? html`<${YogaStats} yogaSessions=${state.yogaSessions || []} />`
-        : html`<${BodyWeightStats} bodyWeights=${state.bodyWeights || []} /><${SweetsStats} sweets=${state.sweets || {}} />`}
+        : html`<${YogaStats} yogaSessions=${state.yogaSessions || []} />`}
     </div>
   </div>`;
 }

@@ -12,7 +12,7 @@
  * sauber ersetzt werden.
  */
 
-const CACHE = 'meintraining-v25';
+const CACHE = 'meintraining-v26';
 
 const ASSETS = [
   './',
